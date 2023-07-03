@@ -46,7 +46,7 @@ export default class PageVideoStreamWriter extends EventEmitter {
     const isWritable = this.isWritableStream(destinationSource);
     this.configureFFmPegPath();
     if (isWritable) {
-      this.configureVideoWritableStream(destinationSource as Writable);
+      this.configureVideoWritableStream(destinationSource);
     } else {
       this.configureVideoFile(destinationSource as string);
     }
@@ -102,7 +102,7 @@ export default class PageVideoStreamWriter extends EventEmitter {
     setFfmpegPath(ffmpegPath);
   }
 
-  private isWritableStream(destinationSource: string | Writable): boolean {
+  private isWritableStream(destinationSource: string | Writable): destinationSource is Writable {
     if (destinationSource && typeof destinationSource !== 'string') {
       if (
         !(destinationSource instanceof Writable) ||
