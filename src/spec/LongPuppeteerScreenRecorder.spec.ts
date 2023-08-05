@@ -24,7 +24,7 @@ describe.concurrent(
           await expect(async () => {
             const options: PuppeteerScreenRecorderOptions = { videoCodec: 'invalid-codec' }
             const recorder = new PuppeteerScreenRecorder(page, options)
-            await recorder.startStream(fileWriteStream)
+            await recorder.startWritingToStream(fileWriteStream)
           }).rejects.toThrow(
             'Video codec invalid-codec is not available for encoding. Available codecs:'
           )
@@ -112,7 +112,7 @@ async function record(
 ) {
   await goToClock(page)
   const recorder = new PuppeteerScreenRecorder(page, options)
-  await recorder.startStream(fileWriteStream)
+  await recorder.startWritingToStream(fileWriteStream)
   await sleep(10_000)
   await recorder.stop()
 }

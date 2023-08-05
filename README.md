@@ -115,10 +115,10 @@ const Config = {
     height: 768,
   },
   videoCrf: 18,
-  videoCodec: 'libx265', // or libx264, libvpx-vp9
+  videoCodec: 'libx264', // or libx264, libvpx-vp9
   videoPreset: 'ultrafast',
   videoBitrate: 1000,
-  autopad: {
+  autoPad: {
     color: 'black' | '#35A5FF',
   },
   aspectRatio: '4:3',
@@ -139,7 +139,7 @@ const Config = {
 
 > - **aspectRatio**: Specify the aspect ratio of the video. Default value is `4:3`.
 
-> - **autopad**: Specify whether autopad option is used and its color. Default to autopad deactivation
+> - **autoPad**: Specify whether autoPad option is used and its color. Default to autoPad deactivation
 >   mode.
 
 > - **recordDurationLimit**: Numerical value specify duration (in seconds) to record the video. By
@@ -165,15 +165,15 @@ const recorder = new PuppeteerScreenRecorder(page)
 **Option 1 - Start video capturing and save as file**
 
 ```javascript
-const SavePath = './test/demo.mp4'
-await recorder.start(savePath)
+const savePath = './test/demo.mp4'
+await recorder.statWritingToFile(savePath)
 ```
 
 **Option 2 - Start Video capturing using stream**
 
 ```javascript
 const pipeStream = new PassThrough()
-await recorder.startStream(pipeStream)
+await recorder.startWritingToStream(pipeStream)
 ```
 
 > **pass**: Any writeable stream that will be an output for the stream recorder. Video is recorded and
@@ -199,7 +199,7 @@ const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder')
   const browser = await puppeteer.launch()
   const page = await browser.newPage()
   const recorder = new PuppeteerScreenRecorder(page)
-  await recorder.start('./report/video/simple.mp4') // supports extension - mp4, avi, webm and mov
+  await recorder.statWritingToFile('./report/video/simple.mp4') // supports extension - mp4, avi, webm and mov
   await page.goto('https://example.com')
 
   await page.goto('https://test.com')
@@ -275,7 +275,7 @@ Webm format is supported.
 
 ---
 
-Yes. By passing writable stream/duplex stream to `startStream` method.
+Yes. By passing writable stream/duplex stream to `startWritingToStream` method.
 
 **Q: Can I limit the time of recording, like to stop after 2 minutes?**
 

@@ -53,7 +53,7 @@ describe.concurrent(
             aspectRatio: '4:3',
           }
           const recorder = new PuppeteerScreenRecorder(page, options)
-          await recorder.start(outputVideoPath)
+          await recorder.statWritingToFile(outputVideoPath)
 
           /** execute */
           await goToGithub(page)
@@ -72,7 +72,7 @@ describe.concurrent(
         try {
           const outputVideoPath = outputPath('./tes')
           const recorder = new PuppeteerScreenRecorder(page)
-          await recorder.start(outputVideoPath)
+          await recorder.statWritingToFile(outputVideoPath)
           /** execute */
           await goToGithubAndGoogle(page)
 
@@ -98,7 +98,7 @@ describe.concurrent(
           const fileWriteStream = fs.createWriteStream(outputVideoPath)
 
           const recorder = new PuppeteerScreenRecorder(page)
-          await recorder.startStream(fileWriteStream)
+          await recorder.startWritingToStream(fileWriteStream)
 
           /** execute */
           await goToGithubAndGoogle(page)
@@ -116,8 +116,8 @@ describe.concurrent(
     }
 
     {
-      const outputVideoPath = outputPath('5a-gray-autopad-color.mp4')
-      it(`Records with the autopad color to gray to ${outputVideoPath}`, async ({ expect }) => {
+      const outputVideoPath = outputPath('5a-gray-autoPad-color.mp4')
+      it(`Records with the autoPad color to gray to ${outputVideoPath}`, async ({ expect }) => {
         /** setup */
         await withBrowser(async (page) => {
           const options: PuppeteerScreenRecorderOptions = {
@@ -126,12 +126,12 @@ describe.concurrent(
               width: 1024,
               height: 1024,
             },
-            autopad: {
+            autoPad: {
               color: 'gray',
             },
           }
           const recorder = new PuppeteerScreenRecorder(page, options)
-          await recorder.start(outputVideoPath)
+          await recorder.statWritingToFile(outputVideoPath)
 
           /** execute */
           await goToGithub(page)
@@ -146,8 +146,8 @@ describe.concurrent(
     }
 
     {
-      const outputVideoPath = outputPath('5b-hex-autopad-color.mp4')
-      it(`Records with the autopad color #008000 to ${outputVideoPath}`, async ({ expect }) => {
+      const outputVideoPath = outputPath('5b-hex-autoPad-color.mp4')
+      it(`Records with the autoPad color #008000 to ${outputVideoPath}`, async ({ expect }) => {
         /** setup */
         await withBrowser(async (page) => {
           const options: PuppeteerScreenRecorderOptions = {
@@ -156,12 +156,12 @@ describe.concurrent(
               width: 1024,
               height: 1024,
             },
-            autopad: {
+            autoPad: {
               color: '#008000',
             },
           }
           const recorder = new PuppeteerScreenRecorder(page, options)
-          await recorder.start(outputVideoPath)
+          await recorder.statWritingToFile(outputVideoPath)
 
           /** execute */
           await goToGithub(page)
@@ -175,8 +175,8 @@ describe.concurrent(
     }
 
     {
-      const outputVideoPath = outputPath('5b-default-autopad-color.mp4')
-      it(`Records with the default autopad color to ${outputVideoPath}`, async ({ expect }) => {
+      const outputVideoPath = outputPath('5b-default-autoPad-color.mp4')
+      it(`Records with the default autoPad color to ${outputVideoPath}`, async ({ expect }) => {
         /** setup */
         await withBrowser(async (page) => {
           const options: PuppeteerScreenRecorderOptions = {
@@ -185,10 +185,10 @@ describe.concurrent(
               width: 1024,
               height: 1024,
             },
-            autopad: {},
+            autoPad: {},
           }
           const recorder = new PuppeteerScreenRecorder(page, options)
-          await recorder.start(outputVideoPath)
+          await recorder.statWritingToFile(outputVideoPath)
 
           /** execute */
           await goToGithub(page)
@@ -215,7 +215,7 @@ describe.concurrent(
             videoCrf: 0,
           }
           const recorder = new PuppeteerScreenRecorder(page, options)
-          await recorder.start(outputVideoPath)
+          await recorder.statWritingToFile(outputVideoPath)
 
           /** execute */
           await goToGithub(page)
@@ -234,7 +234,7 @@ describe.concurrent(
 async function recordWithFormat(outputVideoPath: string, expect: ExpectStatic, format: string) {
   await withBrowser(async (page) => {
     const recorder = new PuppeteerScreenRecorder(page)
-    await recorder.start(outputVideoPath)
+    await recorder.statWritingToFile(outputVideoPath)
 
     await goToGithubAndGoogle(page)
 
@@ -270,7 +270,7 @@ function assertSuccessfulRecording(
   expect(fs.existsSync(outputVideoPath)).toBeTruthy()
 
   if (checkDuration) {
-    const duration = recorder.getRecordDuration()
+    const duration = recorder.recordDuration
     expect(duration).not.toEqual('00:00:00:00')
   }
 }

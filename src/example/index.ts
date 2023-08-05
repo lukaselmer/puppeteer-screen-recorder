@@ -19,9 +19,9 @@ async function testStartMethod(format: string, isStream: boolean) {
     format = format.replace('video', 'stream')
     const fileWriteStream = fs.createWriteStream(format)
     passthrough.pipe(fileWriteStream)
-    await recorder.startStream(passthrough)
+    await recorder.startWritingToStream(passthrough)
   } else {
-    await recorder.start(format)
+    await recorder.statWritingToFile(format)
   }
   await page.goto('https://developer.mozilla.org/en-US/docs/Web/CSS/animation')
   await sleep(10 * 1000)

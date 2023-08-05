@@ -83,7 +83,8 @@
     "node": ">=18"
   },
   "dependencies": {
-    "fluent-ffmpeg": "^2.1.2"
+    "fluent-ffmpeg": "^2.1.2",
+    "tiny-typed-emitter": "^2.1.0"
   },
   "optionalDependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0"

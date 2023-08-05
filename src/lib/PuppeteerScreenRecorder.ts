@@ -1,54 +1,44 @@
-import { mkdir } from 'fs/promises'
-import { dirname } from 'path'
-import { Writable } from 'stream'
+import { mkdir } from 'node:fs/promises'
+import { dirname } from 'node:path'
+import { Writable } from 'node:stream'
 import { Page } from 'puppeteer'
-import { PageVideoStreamCollector } from './pageVideoStreamCollector'
-import { PuppeteerScreenRecorderOptions } from './pageVideoStreamTypes'
-import { PageVideoStreamWriter } from './pageVideoStreamWriter'
-
-/**
- * @ignore
- * @default
- * @description This will be option passed to the puppeteer screen recorder
- */
-const defaultPuppeteerScreenRecorderOptions: PuppeteerScreenRecorderOptions = {
-  followNewTab: true,
-  fps: 15,
-  quality: 100,
-  ffmpegPath: null,
-  videoFrame: {
-    width: null,
-    height: null,
-  },
-  aspectRatio: '4:3',
-}
+import {
+  DefinedPuppeteerScreenRecorderOptions,
+  PuppeteerScreenRecorderOptions,
+  toDefinedOptions,
+} from './PuppeteerScreenRecorderOptions'
+import { PageVideoStreamReader } from './reader/PageVideoStreamReader'
+import { PageVideoStreamWriter } from './writer/pageVideoStreamWriter'
 
 /**
  * PuppeteerScreenRecorder class is responsible for managing the video
  *
  * ```typescript
  * const screenRecorderOptions = {
- *  followNewTab: true,
- *  fps: 15,
+ *   followNewTab: true,
+ *   fps: 15,
+ *   outputFormat: 'mp4',
  * }
  * const savePath = "./test/demo.mp4";
  * const screenRecorder = new PuppeteerScreenRecorder(page, screenRecorderOptions);
- * await screenRecorder.start(savePath);
+ * await screenRecorder.statWritingToFile(savePath);
  *  // some puppeteer action or test
  * await screenRecorder.stop()
  * ```
  */
 export class PuppeteerScreenRecorder {
-  private page: Page
-  private options: PuppeteerScreenRecorderOptions
-  private streamReader: PageVideoStreamCollector
+  private options: DefinedPuppeteerScreenRecorderOptions
+  private streamReader: PageVideoStreamReader
   private streamWriter!: PageVideoStreamWriter
   private stopRecordingPromise: Promise<void> | undefined
+  recorderErrors: Error[] = []
 
-  constructor(page: Page, options = {}) {
-    this.options = Object.assign({}, defaultPuppeteerScreenRecorderOptions, options)
-    this.streamReader = new PageVideoStreamCollector(page, this.options)
-    this.page = page
+  constructor(
+    private page: Page,
+    options: PuppeteerScreenRecorderOptions = {}
+  ) {
+    this.options = toDefinedOptions(options)
+    this.streamReader = new PageVideoStreamReader(page, this.options.inputOptions)
   }
 
   /**
@@ -57,11 +47,8 @@ export class PuppeteerScreenRecorder {
    *  2. if this method is called after stop method, it would give the total time for recording
    * @returns total duration of video
    */
-  getRecordDuration(): string {
-    if (!this.streamWriter) {
-      return '00:00:00:00'
-    }
-    return this.streamWriter.duration
+  get recordDuration(): string {
+    return this.streamWriter?.duration ?? '00:00:00:00'
   }
 
   /**
@@ -69,14 +56,14 @@ export class PuppeteerScreenRecorder {
    * @description Start the video capturing session
    * @example
    * ```
-   *  const savePath = './test/demo.mp4'; //.mp4 is required
-   *  await recorder.start(savePath);
+   *  const savePath = './test/demo.mp4'
+   *  await recorder.statWritingToFile(savePath)
    * ```
    */
-  async start(savePath: string): Promise<void> {
+  async statWritingToFile(savePath: string): Promise<void> {
     await this.ensureDirectoryExist(dirname(savePath))
 
-    this.streamWriter = new PageVideoStreamWriter(savePath, this.options)
+    this.streamWriter = new PageVideoStreamWriter(savePath, this.options.outputOptions)
     await this.streamWriter.startStreamWriter()
     await this.startStreamReader()
   }
@@ -90,40 +77,42 @@ export class PuppeteerScreenRecorder {
    * @example
    * ```
    *  const stream = new PassThrough();
-   *  await recorder.startStream(stream);
+   *  await recorder.startWritingToStream(stream);
    * ```
    */
-  async startStream(stream: Writable): Promise<void> {
-    this.streamWriter = new PageVideoStreamWriter(stream, this.options)
+  async startWritingToStream(stream: Writable): Promise<void> {
+    this.streamWriter = new PageVideoStreamWriter(stream, this.options.outputOptions)
     await this.streamWriter.startStreamWriter()
     await this.startStreamReader()
   }
 
   /**
    * @description start listening for video stream from the page.
-   * @returns PuppeteerScreenRecorder
    */
-  private async startStreamReader(): Promise<PuppeteerScreenRecorder> {
+  private async startStreamReader(): Promise<void> {
     this.setupListeners()
-
     await this.streamReader.start()
-    return this
   }
 
   private setupListeners(): void {
     this.page.once('close', () => this.gracefulStop())
 
-    this.streamReader.on('pageScreenFrame', (pageScreenFrame) => {
-      this.streamWriter.insert(pageScreenFrame)
-    })
+    this.streamReader.on('pageScreenFrame', (pageScreenFrame) =>
+      this.streamWriter.gracefulInsert(pageScreenFrame)
+    )
 
-    this.streamWriter.once('videoStreamWriterError', () => this.gracefulStop())
+    this.streamWriter.once('videoStreamWriterError', async (error) => {
+      this.recorderErrors.push(error as Error)
+      console.error('Error from vide stream writer', error)
+      await this.gracefulStop()
+    })
   }
 
   async gracefulStop() {
     try {
       await this.stop()
     } catch (error) {
+      this.recorderErrors.push(error as Error)
       console.error('Error while stopping the video recording', error)
     }
   }
@@ -133,9 +122,7 @@ export class PuppeteerScreenRecorder {
    * @throws {Error} if the video could not be captured
    */
   async stop(): Promise<void> {
-    if (this.stopRecordingPromise) await this.stopRecordingPromise
-
-    this.stopRecordingPromise = this.stopInternal()
+    if (!this.stopRecordingPromise) this.stopRecordingPromise = this.stopInternal()
     await this.stopRecordingPromise
   }
 
