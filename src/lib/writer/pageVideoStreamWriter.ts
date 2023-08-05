@@ -10,11 +10,10 @@ import { VideoWriteStatus } from './VideoWriteStatus'
 
 export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEvents> {
   // private readonly screenLimit = 10
-  private screenCastFrames: PageScreenFrame[] = []
+  // private screenCastFrames: PageScreenFrame[] = []
   duration = '00:00:00:00'
 
   private status: VideoWriteStatus = 'notStarted'
-  private options: PageVideoStreamWriterOptions
 
   private videoMediatorStream: PassThrough = new PassThrough()
   private writerPromise: Promise<void> | undefined
@@ -22,11 +21,10 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
 
   constructor(
     private destination: string | Writable,
-    options: PageVideoStreamWriterOptions
+    private options: PageVideoStreamWriterOptions
   ) {
     super()
-    this.options = options
-    this.frameProcessor = new FrameProcessor()
+    this.frameProcessor = new FrameProcessor(options, this.videoMediatorStream)
   }
 
   async startStreamWriter(): Promise<void> {
@@ -198,7 +196,10 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
 
   private insert(frame: PageScreenFrame): void {
     if (this.status === 'stopping' || this.status === 'completed') return
-    this.frameProcessor.push(frame)
+    this.frameProcessor.processFrame(frame)
+    // if (this.frameProcessor.shouldWriteFrame()) {
+    //   if (this.videoMediatorStream.writable) this.videoMediatorStream.write(frame.blob)
+    // }
 
     // reduce the queue into half when it is full
     // if (this.screenCastFrames.length === this.screenLimit) {
@@ -210,7 +211,7 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
     // const insertionIndex = this.findSlot(frame.timestamp)
 
     // if (insertionIndex === this.screenCastFrames.length) {
-    this.screenCastFrames.push(frame)
+    // this.screenCastFrames.push(frame)
     // } else {
     //   this.screenCastFrames.splice(insertionIndex, 0, frame)
     // }
@@ -246,8 +247,6 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
 
     this.videoMediatorStream.end()
     this.status = 'completed'
-
-    console.log('Average FPS', this.frameProcessor.averageFps())
 
     await this.writerPromise
   }
@@ -333,24 +332,43 @@ export interface PageVideoStreamWriterEvents {
 
 export class FrameProcessor {
   private previousFrame: PageScreenFrame | undefined
-  frames: PageScreenFrame[] = []
-  currentFps = 0
+  private lastWriteTime: number | undefined
+  private frameDuration: number
 
-  push(frame: PageScreenFrame): void {
+  constructor(
+    private options: PageVideoStreamWriterOptions,
+    private outputStream: PassThrough
+  ) {
+    this.frameDuration = 1 / this.options.fps
+  }
+
+  processFrame(frame: PageScreenFrame): void {
     if (this.previousFrame && this.previousFrame.timestamp > frame.timestamp)
       throw new Error('Frame is out of order')
 
     if (this.previousFrame && this.previousFrame.timestamp === frame.timestamp) return
 
-    this.frames.push(frame)
-    this.previousFrame = frame
+    this.handleWrite(frame)
   }
 
-  averageFps(): number {
-    const firstFrame = this.frames.at(0)
-    const lastFrame = this.frames.at(-1)
-    if (!firstFrame || !lastFrame) return 0
+  handleWrite(currentFrame: PageScreenFrame) {
+    if (!this.outputStream.writable) return
 
-    return this.frames.length / (lastFrame.timestamp - firstFrame.timestamp)
+    if (!this.lastWriteTime) {
+      this.lastWriteTime = currentFrame.timestamp
+      this.outputStream.write(currentFrame.blob)
+      return
+    }
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const nextWriteTime = this.lastWriteTime + this.frameDuration
+      if (currentFrame.timestamp < nextWriteTime) return
+
+      if (!this.outputStream.writable) return
+
+      this.outputStream.write(currentFrame.blob)
+      this.lastWriteTime += this.frameDuration
+    }
   }
 }
