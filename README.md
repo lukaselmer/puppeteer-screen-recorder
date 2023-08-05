@@ -1,6 +1,10 @@
 # <img alt="puppeteer screen recorder logo" width="128px" src="https://github.com/prasanaworld/puppeteer-screen-recorder/blob/main/asserts/puppeteer-screen-recorder.png" /> puppeteer-screen-recorder
 
-A puppeteer Plugin that uses the native [chrome devtool protocol](https://chromedevtools.github.io/devtools-protocol/tot/Page/#method-startScreencast) for capturing video frame by frame. Also supports an option to follow pages that are opened by the current page object. [Check out API Docs](https://prasanaworld.github.io/puppeteer-screen-recorder/classes/puppeteerscreenrecorder.html).
+A puppeteer Plugin that uses the native
+[chrome devtool protocol](https://chromedevtools.github.io/devtools-protocol/tot/Page/#method-startScreencast)
+for capturing video frame by frame. Also supports an option to follow pages that are opened by the
+current page object.
+[Check out API Docs](https://prasanaworld.github.io/puppeteer-screen-recorder/classes/puppeteerscreenrecorder.html).
 
 [![NPM](https://nodei.co/npm/puppeteer-screen-recorder.png)](https://npmjs.org/package/puppeteer-screen-recorder)
 
@@ -21,41 +25,55 @@ A puppeteer Plugin that uses the native [chrome devtool protocol](https://chrome
 
 </p>
 
-
 ## Be a Sponsor
-Puppeteer-screen-recorder isn't backed by a company, so the future of this project depends on you. Become a sponsor or a backer - help the open source community. 
+
+Puppeteer-screen-recorder isn't backed by a company, so the future of this project depends on you. Become
+a sponsor or a backer - help the open source community.
 
 #### **For Companies and Businesses**
-By becoming a Github Sponsor, your company and brand will be recognized as a one that gives back to the open source tools that run your business and one that respects your developers time and your customers' experience.
+
+By becoming a Github Sponsor, your company and brand will be recognized as a one that gives back to the
+open source tools that run your business and one that respects your developers time and your customers'
+experience.
 
 #### **For Developers**
-By helping your company become a Github Sponsor, you will not only feel great about giving back to the open source tools that run your business run, If you believe your company could become a sponsor, then please reach out!
 
-  + [open-collective](https://opencollective.com/puppeteer-screen-recorder)
-  + [Paypal](https://paypal.me/prasanaworld)
-  + [Bitcoin - 3NdGW6wKVFgxa1X5XxRDNHqMWAhGNSrA5A](3NdGW6wKVFgxa1X5XxRDNHqMWAhGNSrA5A)
+By helping your company become a Github Sponsor, you will not only feel great about giving back to the
+open source tools that run your business run, If you believe your company could become a sponsor, then
+please reach out!
+
+- [open-collective](https://opencollective.com/puppeteer-screen-recorder)
+- [Paypal](https://paypal.me/prasanaworld)
+- [Bitcoin - 3NdGW6wKVFgxa1X5XxRDNHqMWAhGNSrA5A](3NdGW6wKVFgxa1X5XxRDNHqMWAhGNSrA5A)
 
 ## Key Feature
 
 ### 1. Follow Page Automatically
 
-Automatically follows pages (multiple pages) which are opened at runtime, which will be part of video capturing. Also support options to disable the default flow.
+Automatically follows pages (multiple pages) which are opened at runtime, which will be part of video
+capturing. Also support options to disable the default flow.
 
 ### 2. No overhead over FF_MPEG library
 
-FFMPEG library's installation and configuration are automatically managed by the library internally. Also offers options to configure with custom library path.
+FFMPEG library's installation and configuration are automatically managed by the library internally. Also
+offers options to configure with custom library path.
 
 ### 3. Native Implementation
 
-This plugin works directly with native [chrome devtool protocol](https://chromedevtools.github.io/devtools-protocol/tot/Page/#method-startScreencast) to capture the video under the wood without any other thirdparty puppeteer plugins for screen capturing.
+This plugin works directly with native
+[chrome devtool protocol](https://chromedevtools.github.io/devtools-protocol/tot/Page/#method-startScreencast)
+to capture the video under the wood without any other thirdparty puppeteer plugins for screen capturing.
 
 ### 4. Adopted the Chromium principles
 
-Adopted Chromium principles such as Speed, Security, Stability and Simplicity. It also ensures no frames are missed during video capturing and doesn't impact the performance, since its doesn't use any other puppeteer plugin internally.
+Adopted Chromium principles such as Speed, Security, Stability and Simplicity. It also ensures no frames
+are missed during video capturing and doesn't impact the performance, since its doesn't use any other
+puppeteer plugin internally.
 
 ### 5. Supports multiple video format and stream
 
-Supports multiple video format like AVI, MP4, MOV and WEBM. Enable support for writable or duplex stream for process the output streaming .
+Supports multiple video format like AVI, MP4, MOV and WEBM. Enable support for writable or duplex stream
+for process the output streaming .
 
 ## Getting Started
 
@@ -79,10 +97,10 @@ yarn add puppeteer-screen-recorder
 
 ```javascript
 // ES6
-import { PuppeteerScreenRecorder } from 'puppeteer-screen-recorder';
+import { PuppeteerScreenRecorder } from 'puppeteer-screen-recorder'
 
 // or commonjs
-const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
+const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder')
 ```
 
 **2. Setup the Configuration object.**
@@ -91,93 +109,103 @@ const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
 const Config = {
   followNewTab: true,
   fps: 25,
-  ffmpeg_Path: '<path of ffmpeg_path>' || null,
+  ffmpegPath: '<path of ffmpeg_path>' || null,
   videoFrame: {
     width: 1024,
     height: 768,
   },
   videoCrf: 18,
-  videoCodec: 'libx264',
+  videoCodec: 'libx265', // or libx264, libvpx-vp9
   videoPreset: 'ultrafast',
   videoBitrate: 1000,
   autopad: {
     color: 'black' | '#35A5FF',
   },
   aspectRatio: '4:3',
-};
+}
 ```
 
-> - **followNewTab** : Boolean value which is indicate whether to follow the tab or not. Default value is true.
+> - **followNewTab** : Boolean value which is indicate whether to follow the tab or not. Default value is
+>   true.
 
-> - **fps**: Numeric value which denotes no.of Frames per second in which the video should be recorded. default value is 25.
+> - **fps**: Numeric value which denotes no.of Frames per second in which the video should be recorded.
+>   default value is 25.
 
-> - **ffmpeg_Path**: String value pointing to the installation of [FFMPEG](https://ffmpeg.org/). Default is null (Automatically install the FFMPEG and use it).
+> - **ffmpegPath**: String value pointing to the installation of [FFMPEG](https://ffmpeg.org/). Default
+>   is null (Automatically install the FFMPEG and use it).
 
-> - **videoFrame**: An object which is to specify the width and height of the capturing video frame. Default to browser viewport size.
+> - **videoFrame**: An object which is to specify the width and height of the capturing video frame.
+>   Default to browser viewport size.
 
 > - **aspectRatio**: Specify the aspect ratio of the video. Default value is `4:3`.
 
-> - **autopad**: Specify whether autopad option is used and its color. Default to autopad deactivation mode.
+> - **autopad**: Specify whether autopad option is used and its color. Default to autopad deactivation
+>   mode.
 
-> - **recordDurationLimit**: Numerical value specify duration (in seconds) to record the video. By default video is recorded till stop method is invoked`. (Note: It's mandatory to invoke Stop() method even if this value is set)
+> - **recordDurationLimit**: Numerical value specify duration (in seconds) to record the video. By
+>   default video is recorded till stop method is invoked`. (Note: It's mandatory to invoke Stop() method
+>   even if this value is set)
 
 **3. create a new instance of video recording**
 
 ```javascript
-const recorder = new PuppeteerScreenRecorder(page, Config); // Config is optional
+const recorder = new PuppeteerScreenRecorder(page, Config) // Config is optional
 
 // or
 
-const recorder = new PuppeteerScreenRecorder(page);
+const recorder = new PuppeteerScreenRecorder(page)
 ```
 
 > - **page**: Puppeteer page object which needs to captured.
-> - **config**: Config is an optional object.
->   Default value is `{ followNewTab: true, fps: 25, ffmpeg_Path: null }`
+> - **config**: Config is an optional object. Default value is
+>   `{ followNewTab: true, fps: 25, ffmpegPath: null }`
 
 **4. Start Video capturing**
 
 **Option 1 - Start video capturing and save as file**
 
 ```javascript
-const SavePath = './test/demo.mp4';
-await recorder.start(savePath);
+const SavePath = './test/demo.mp4'
+await recorder.start(savePath)
 ```
 
 **Option 2 - Start Video capturing using stream**
 
 ```javascript
-const pipeStream = new PassThrough();
-await recorder.startStream(pipeStream);
+const pipeStream = new PassThrough()
+await recorder.startStream(pipeStream)
 ```
 
-> **pass**: Any writeable stream that will be an output for the stream recorder. Video is recorded and streamed with .mp4 extension.
+> **pass**: Any writeable stream that will be an output for the stream recorder. Video is recorded and
+> streamed with .mp4 extension.
 
-> **savePath**: string value indicating the directory on where to save the video. The path must also specify the name of the video with extension .mp4 (example - ./test/puppeteer-demo.mp4). Starting from v2, support added for extensions mp4, avi, mov and webm.
+> **savePath**: string value indicating the directory on where to save the video. The path must also
+> specify the name of the video with extension .mp4 (example - ./test/puppeteer-demo.mp4). Starting from
+> v2, support added for extensions mp4, avi, mov and webm.
 
 **5. Stop the video capturing.**
 
 ```javascript
-await recorder.stop();
+await recorder.stop()
 ```
 
 ### Example
 
 ```javascript
-const puppeteer = require('puppeteer');
-const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
+const puppeteer = require('puppeteer')
+const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder')
 
-(async () => {
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  const recorder = new PuppeteerScreenRecorder(page);
-  await recorder.start('./report/video/simple.mp4'); // supports extension - mp4, avi, webm and mov
-  await page.goto('https://example.com');
+;(async () => {
+  const browser = await puppeteer.launch()
+  const page = await browser.newPage()
+  const recorder = new PuppeteerScreenRecorder(page)
+  await recorder.start('./report/video/simple.mp4') // supports extension - mp4, avi, webm and mov
+  await page.goto('https://example.com')
 
-  await page.goto('https://test.com');
-  await recorder.stop();
-  await browser.close();
-})();
+  await page.goto('https://test.com')
+  await recorder.stop()
+  await browser.close()
+})()
 ```
 
 ## FAQ
@@ -210,11 +238,13 @@ No, it's not tied to the window Object.
 
 Yes, it automatically follows pages which is created at runtime.
 
-**Q: is there an option to disable video recording for new page created and record video only for the page object passed**
+**Q: is there an option to disable video recording for new page created and record video only for the
+page object passed**
 
 ---
 
-Yes, By setting the `options.followNewTab` to false, it record only video for the passed page object alone.
+Yes, By setting the `options.followNewTab` to false, it record only video for the passed page object
+alone.
 
 **Q: Does it support to record video at 60 fps**
 
@@ -232,7 +262,8 @@ No, it doesn't use the window object.
 
 ---
 
-Yes, it uses FFMPEG with optimized options to speed up the video recording using stream from chrome devtool protocol.
+Yes, it uses FFMPEG with optimized options to speed up the video recording using stream from chrome
+devtool protocol.
 
 **Q: Does it support Webm?**
 
@@ -263,5 +294,3 @@ No, it doesn't audio recording.
 ---
 
 No, it wont support GIF. since Gif is considered as a image format.
-
-

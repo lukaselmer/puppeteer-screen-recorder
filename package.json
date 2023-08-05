@@ -5,9 +5,6 @@
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
-  "workspaces": [
-    "https://opencollective.com/puppeteer-screen-recorder"
-  ],
   "repository": "https://github.com/prasanaworld/puppeteer-screen-recorder",
   "author": {
     "name": "Prasana Kannan",
@@ -15,6 +12,9 @@
   },
   "homepage": "https://prasanaworld.github.io/puppeteer-screen-recorder/",
   "license": "MIT",
+  "sponsor": {
+    "url": "https://opencollective.com/puppeteer-screen-recorder"
+  },
   "keywords": [
     "puppeteer",
     "screen",
@@ -55,7 +55,8 @@
     "fix": "run-s fix:*",
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:lint": "eslint src --ext .ts --fix",
-    "test": "run-s build test:*",
+    "test": "vitest",
+    "test:legacy": "run-s build test:*",
     "test:lint": "eslint src --ext .ts",
     "test:prettier": "prettier \"src/**/*.ts\" --list-different",
     "test:unit": "nyc --silent ava",
@@ -79,7 +80,7 @@
     "ci": "run-s reset-hard doc:html version doc:publish"
   },
   "engines": {
-    "node": ">=10"
+    "node": ">=18"
   },
   "dependencies": {
     "fluent-ffmpeg": "^2.1.2"
@@ -88,35 +89,40 @@
     "@ffmpeg-installer/ffmpeg": "^1.1.0"
   },
   "peerDependencies": {
-    "puppeteer": ">=5.5.0"
+    "puppeteer": ">=21.0.1"
   },
   "devDependencies": {
-    "@types/puppeteer": "^7.0.4",
-    "@types/puppeteer-core": "^7.0.4",
-    "@ava/typescript": "^1.1.1",
+    "@ava/typescript": "^4.1.0",
+    "@getify/eslint-plugin-proper-ternary": "^3.1.1",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "@types/node": "^14.14.13",
-    "@typescript-eslint/eslint-plugin": "^4.0.1",
-    "@typescript-eslint/parser": "^4.0.1",
-    "ava": "^3.12.1",
-    "codecov": "^3.5.0",
-    "cspell": "^4.1.0",
+    "@types/fluent-ffmpeg": "^2.1.21",
+    "@types/node": "^18.17.2",
+    "@typescript-eslint/eslint-plugin": "^6.2.1",
+    "@typescript-eslint/parser": "^6.2.1",
+    "@vitest/coverage-v8": "^0.34.1",
+    "@vitest/ui": "^0.34.1",
+    "ava": "^5.3.1",
+    "codecov": "^3.8.3",
+    "cspell": "^6.31.2",
     "cz-conventional-changelog": "^3.3.0",
-    "eslint": "^7.8.0",
-    "eslint-config-prettier": "^6.11.0",
+    "eslint": "^8.46.0",
+    "eslint-config-airbnb-typescript": "^17.1.0",
+    "eslint-config-prettier": "^8.10.0",
     "eslint-plugin-eslint-comments": "^3.2.0",
-    "eslint-plugin-functional": "^3.0.2",
-    "eslint-plugin-import": "^2.22.0",
-    "gh-pages": "^3.1.0",
+    "eslint-plugin-functional": "^6.0.0",
+    "eslint-plugin-import": "^2.28.0",
+    "eslint-plugin-vitest": "^0.2.8",
+    "gh-pages": "^5.0.0",
     "npm-run-all": "^4.1.5",
     "nyc": "^15.1.0",
-    "open-cli": "^6.0.1",
-    "prettier": "^2.1.1",
-    "puppeteer": "^6.0.0",
-    "standard-version": "^9.0.0",
-    "ts-node": "^9.0.0",
-    "typedoc": "^0.19.0",
-    "typescript": "^4.0.2"
+    "open-cli": "^7.2.0",
+    "prettier": "^3.0.1",
+    "puppeteer": "^21.0.1",
+    "standard-version": "^9.5.0",
+    "ts-node": "^10.9.1",
+    "typedoc": "^0.24.8",
+    "typescript": "^5.1.6",
+    "vitest": "^0.34.1"
   },
   "files": [
     "build/main",
@@ -133,7 +139,8 @@
     "typescript": {
       "rewritePaths": {
         "src/": "build/main/"
-      }
+      },
+      "compile": false
     },
     "files": [
       "!build/module/**"
@@ -145,7 +152,12 @@
     }
   },
   "prettier": {
-    "singleQuote": true
+    "$schema": "http://json.schemastore.org/prettierrc",
+    "printWidth": 105,
+    "proseWrap": "always",
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "es5"
   },
   "nyc": {
     "extends": "@istanbuljs/nyc-config-typescript",

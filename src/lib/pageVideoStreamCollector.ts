@@ -1,166 +1,164 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events'
+import { CDPSession, Page } from 'puppeteer'
+import { PuppeteerScreenRecorderOptions } from './pageVideoStreamTypes'
 
-import { CDPSession, Page } from 'puppeteer';
+export class PageVideoStreamCollector extends EventEmitter {
+  private page: Page
+  private options: PuppeteerScreenRecorderOptions
+  private sessionsStack: CDPSession[] = []
+  private isStreamingEnded = false
 
-import { PuppeteerScreenRecorderOptions } from './pageVideoStreamTypes';
-
-/**
- * @ignore
- */
-export class pageVideoStreamCollector extends EventEmitter {
-  private page: Page;
-  private options: PuppeteerScreenRecorderOptions;
-  private sessionsStack: [CDPSession?] = [];
-  private isStreamingEnded = false;
-
-  private isFrameAckReceived: Promise<void>;
+  private isFrameAckReceived: Promise<void> | undefined
 
   constructor(page: Page, options: PuppeteerScreenRecorderOptions) {
-    super();
-    this.page = page;
-    this.options = options;
-  }
-
-  private get shouldFollowPopupWindow(): boolean {
-    return this.options.followNewTab;
+    super()
+    this.page = page
+    this.options = options
   }
 
   private async getPageSession(page: Page): Promise<CDPSession | null> {
     try {
-      const context = page.target();
-      return await context.createCDPSession();
+      const context = page.target()
+      return await context.createCDPSession()
     } catch (error) {
-      console.log('Failed to create CDP Session', error);
-      return null;
+      console.log('Failed to create CDP Session', error)
+      return null
     }
   }
 
-  private getCurrentSession(): CDPSession | null {
-    return this.sessionsStack[this.sessionsStack.length - 1];
+  private getCurrentSession(): CDPSession | undefined {
+    return this.sessionsStack.at(-1)
   }
 
   private addListenerOnTabOpens(page: Page): void {
-    page.on('popup', (newPage) => this.registerTabListener(newPage));
+    page.on('popup', (newPage) => this.registerTabListener(newPage))
   }
 
   private removeListenerOnTabClose(page: Page): void {
-    page.off('popup', (newPage) => this.registerTabListener(newPage));
+    page.off('popup', (newPage) => this.registerTabListener(newPage))
   }
 
   private async registerTabListener(newPage: Page): Promise<void> {
-    await this.startSession(newPage);
-    newPage.once('close', async () => await this.endSession());
+    await this.startSession(newPage)
+    newPage.once('close', () => this.gracefulEndSession())
   }
 
   private async startScreenCast(shouldDeleteSessionOnFailure = false) {
-    const currentSession = this.getCurrentSession();
-    const quality = Number.isNaN(this.options.quality)
-      ? 100
-      : Math.max(Math.min(this.options.quality, 100), 0);
+    const currentSession = this.getCurrentSession()
+    // if (!currentSession) throw new Error('No current session found')
+
     try {
-      await currentSession.send('Animation.setPlaybackRate', {
+      await currentSession!.send('Animation.setPlaybackRate', {
         playbackRate: 1,
-      });
-      await currentSession.send('Page.startScreencast', {
+      })
+      await currentSession!.send('Page.startScreencast', {
         everyNthFrame: 1,
         format: this.options.format || 'jpeg',
-        quality: quality,
-      });
+        quality: this.quality,
+      })
     } catch (e) {
-      if (shouldDeleteSessionOnFailure) {
-        this.endSession();
-      }
+      if (shouldDeleteSessionOnFailure) await this.endSession()
     }
   }
 
   private async stopScreenCast() {
-    const currentSession = this.getCurrentSession();
-    if (!currentSession) {
-      return;
-    }
-    await currentSession.send('Page.stopScreencast');
+    const currentSession = this.getCurrentSession()
+    if (!currentSession) return
+
+    await currentSession.send('Page.stopScreencast')
   }
 
   private async startSession(page: Page): Promise<void> {
-    const pageSession = await this.getPageSession(page);
+    const pageSession = await this.getPageSession(page)
     if (!pageSession) {
-      return;
+      return
     }
-    await this.stopScreenCast();
-    this.sessionsStack.push(pageSession);
-    this.handleScreenCastFrame(pageSession);
-    await this.startScreenCast(true);
+    await this.stopScreenCast()
+    this.sessionsStack.push(pageSession)
+    this.handleScreenCastFrame(pageSession)
+    await this.startScreenCast(true)
   }
 
-  private async handleScreenCastFrame(session) {
+  private handleScreenCastFrame(session: CDPSession) {
     this.isFrameAckReceived = new Promise((resolve) => {
-      session.on(
-        'Page.screencastFrame',
-        async ({ metadata, data, sessionId }) => {
-          if (!metadata.timestamp || this.isStreamingEnded) {
-            return resolve();
-          }
-
-          const ackPromise = session.send('Page.screencastFrameAck', {
-            sessionId: sessionId,
-          });
-
-          this.emit('pageScreenFrame', {
-            blob: Buffer.from(data, 'base64'),
-            timestamp: metadata.timestamp,
-          });
-
-          try {
-            await ackPromise;
-          } catch (error) {
-            console.error(
-              'Error in sending Acknowledgment for PageScreenCast',
-              error.message
-            );
-          }
+      session.on('Page.screencastFrame', async ({ metadata, data, sessionId }) => {
+        if (!metadata.timestamp || this.isStreamingEnded) {
+          return resolve()
         }
-      );
-    });
+
+        const ackPromise = session.send('Page.screencastFrameAck', {
+          sessionId,
+        })
+
+        this.emit('pageScreenFrame', {
+          blob: Buffer.from(data, 'base64'),
+          timestamp: metadata.timestamp,
+        })
+
+        try {
+          await ackPromise
+        } catch (error) {
+          console.error('Error in sending Acknowledgment for PageScreenCast', (error as Error).message)
+        }
+      })
+    })
+  }
+
+  private async gracefulEndSession(): Promise<void> {
+    try {
+      await this.endSession()
+    } catch (error) {
+      console.error('Error while ending the session', error)
+    }
   }
 
   private async endSession(): Promise<void> {
-    this.sessionsStack.pop();
-    await this.startScreenCast();
+    this.sessionsStack.pop()
+    await this.startScreenCast()
   }
 
-  public async start(): Promise<void> {
-    await this.startSession(this.page);
-    this.page.once('close', async () => await this.endSession());
+  async start(): Promise<void> {
+    await this.startSession(this.page)
+    this.page.once('close', () => this.gracefulEndSession())
 
     if (this.shouldFollowPopupWindow) {
-      this.addListenerOnTabOpens(this.page);
+      this.addListenerOnTabOpens(this.page)
     }
   }
 
-  public async stop(): Promise<boolean> {
+  async stop(): Promise<boolean> {
     if (this.isStreamingEnded) {
-      return this.isStreamingEnded;
+      return this.isStreamingEnded
     }
 
     if (this.shouldFollowPopupWindow) {
-      this.removeListenerOnTabClose(this.page);
+      this.removeListenerOnTabClose(this.page)
     }
 
-    await Promise.race([
-      this.isFrameAckReceived,
-      new Promise((resolve) => setTimeout(resolve, 1000)),
-    ]);
+    await Promise.race([this.isFrameAckReceived, new Promise((resolve) => setTimeout(resolve, 1000))])
 
-    this.isStreamingEnded = true;
+    this.isStreamingEnded = true
 
     try {
       for (const currentSession of this.sessionsStack) {
-        await currentSession.detach();
+        await currentSession.detach()
       }
     } catch (e) {
-      console.warn('Error detaching session', e.message);
+      console.warn('Error detaching session', (e as Error).message)
     }
 
-    return true;
+    return true
   }
+
+  private get quality(): number {
+    return clamp(this.options.quality || 100, 0, 100)
+  }
+
+  private get shouldFollowPopupWindow(): boolean {
+    return typeof this.options.followNewTab === 'boolean' ? this.options.followNewTab : true
+  }
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max)
 }

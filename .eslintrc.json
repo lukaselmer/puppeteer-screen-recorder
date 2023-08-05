@@ -4,30 +4,53 @@
   "parserOptions": { "project": "./tsconfig.json" },
   "env": { "es6": true },
   "ignorePatterns": ["node_modules", "build", "coverage"],
-  "plugins": ["import", "eslint-comments"],
+  "plugins": ["import", "eslint-comments", "@getify/proper-ternary", "vitest"],
   "extends": [
+    "airbnb-typescript/base",
     "eslint:recommended",
-    "plugin:eslint-comments/recommended",
-    "plugin:@typescript-eslint/recommended",
+    "plugin:import/recommended",
     "plugin:import/typescript",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
     "prettier"
   ],
   "globals": { "BigInt": true, "console": true, "WebAssembly": true },
   "rules": {
-    "@typescript-eslint/explicit-module-boundary-types": "off",
-    "eslint-comments/disable-enable-pair": [
+    "lines-between-class-members": ["error", "always", { "exceptAfterSingleLine": true }],
+    "@typescript-eslint/lines-between-class-members": [
       "error",
-      { "allowWholeFile": true }
+      "always",
+      { "exceptAfterSingleLine": true }
     ],
+    "eslint-comments/disable-enable-pair": ["error", { "allowWholeFile": true }],
     "@typescript-eslint/no-class": "off",
     "eslint-comments/no-unused-disable": "error",
-    "import/order": [
+    "sort-imports": ["error", { "ignoreDeclarationSort": true, "ignoreCase": true }],
+    "no-useless-rename": "error",
+    "import/no-cycle": ["error", { "ignoreExternal": true }],
+    "semi": ["error", "never"],
+    "@typescript-eslint/no-unused-vars": [
       "error",
-      { "newlines-between": "always", "alphabetize": { "order": "asc" } }
+      { "argsIgnorePattern": "^_", "destructuredArrayIgnorePattern": "^_", "ignoreRestSiblings": true }
     ],
-    "sort-imports": [
-      "error",
-      { "ignoreDeclarationSort": true, "ignoreCase": true }
-    ]
+    "@typescript-eslint/no-use-before-define": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "object-shorthand": ["error", "always", { "avoidExplicitReturnArrows": true }],
+    "@typescript-eslint/no-floating-promises": ["error", { "ignoreVoid": false }],
+    "@typescript-eslint/explicit-member-accessibility": ["error", { "accessibility": "no-public" }],
+    "require-await": "error",
+    "import/no-dynamic-require": "error",
+    "import/named": "off",
+    "import/no-mutable-exports": "error",
+    "import/order": ["error", { "alphabetize": { "order": "asc", "caseInsensitive": true } }],
+    "import/newline-after-import": "error",
+    "import/no-useless-path-segments": "error",
+    "import/no-default-export": "error",
+    "import/prefer-default-export": "off",
+    "no-nested-ternary": "off",
+    "@getify/proper-ternary/nested": ["error", { "else": true, "depth": 10 }],
+    "no-restricted-imports": ["error", { "patterns": ["__test__/*", "__mocks__/*"] }]
+    // "no-console": "warn"
   }
 }

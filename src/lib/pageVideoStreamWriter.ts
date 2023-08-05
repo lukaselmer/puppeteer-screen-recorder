@@ -1,300 +1,322 @@
-import { EventEmitter } from 'events';
-import os from 'os';
-import { extname } from 'path';
-import { PassThrough, Writable } from 'stream';
-
-import ffmpeg, { setFfmpegPath } from 'fluent-ffmpeg';
-
+import { EventEmitter } from 'events'
+import os from 'os'
+import { PassThrough, Writable } from 'stream'
+import ffmpeg, { Codec, Codecs, FfmpegCommand, setFfmpegPath } from 'fluent-ffmpeg'
 import {
-  pageScreenFrame,
-  SupportedFileFormats,
-  VIDEO_WRITE_STATUS,
-  VideoOptions,
-} from './pageVideoStreamTypes';
+  PageScreenFrame,
+  PuppeteerScreenRecorderOptions,
+  VideoWriteStatus,
+} from './pageVideoStreamTypes'
+import { fileFormatFor, SupportedVideoFileFormat } from './supportedFileFormats'
 
-/**
- * @ignore
- */
-const SUPPORTED_FILE_FORMATS = [
-  SupportedFileFormats.MP4,
-  SupportedFileFormats.AVI,
-  SupportedFileFormats.MOV,
-  SupportedFileFormats.WEBM,
-];
+export class PageVideoStreamWriter extends EventEmitter {
+  private readonly screenLimit = 10
+  private screenCastFrames: PageScreenFrame[] = []
+  duration = '00:00:00:00'
 
-/**
- * @ignore
- */
-export default class PageVideoStreamWriter extends EventEmitter {
-  private readonly screenLimit = 10;
-  private screenCastFrames = [];
-  public duration = '00:00:00:00';
+  private status: VideoWriteStatus = 'notStarted'
+  private options: PuppeteerScreenRecorderOptions
 
-  private status = VIDEO_WRITE_STATUS.NOT_STARTED;
-  private options: VideoOptions;
+  private videoMediatorStream: PassThrough = new PassThrough()
+  private writerPromise: Promise<void> | undefined
 
-  private videoMediatorStream: PassThrough = new PassThrough();
-  private writerPromise: Promise<boolean>;
-
-  constructor(destinationSource: string | Writable, options?: VideoOptions) {
-    super();
-
-    if (options) {
-      this.options = options;
-    }
-
-    const isWritable = this.isWritableStream(destinationSource);
-    this.configureFFmPegPath();
-    if (isWritable) {
-      this.configureVideoWritableStream(destinationSource as Writable);
-    } else {
-      this.configureVideoFile(destinationSource as string);
-    }
+  constructor(
+    private destination: string | Writable,
+    options: PuppeteerScreenRecorderOptions
+  ) {
+    super()
+    this.options = options
   }
 
-  private get videoFrameSize(): string {
-    const { width, height } = this.options.videoFrame;
+  async startStreamWriter(): Promise<void> {
+    await this.configureFfmpegPath()
 
-    return width !== null && height !== null ? `${width}x${height}` : '100%';
+    if (typeof this.destination === 'string') await this.configureVideoFile(this.destination)
+    else if (this.destination.writable) await this.configureVideoWritableStream(this.destination)
+    else throw new Error('Output should be a path or a writable stream')
   }
 
-  private get autopad(): { activation: boolean; color?: string } {
-    const autopad = this.options.autopad;
+  private async configureVideoFile(destinationPath: string) {
+    const outputFormat = fileFormatFor(destinationPath) || this.outputFormat
+    const outputStream = await this.getDestinationStream(
+      outputFormat,
+      this.videoFileCodec(destinationPath)
+    )
 
-    return !autopad
-      ? { activation: false }
-      : { activation: true, color: autopad.color };
-  }
-
-  private getFfmpegPath(): string | null {
-    if (this.options.ffmpeg_Path) {
-      return this.options.ffmpeg_Path;
-    }
-
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const ffmpeg = require('@ffmpeg-installer/ffmpeg');
-      if (ffmpeg.path) {
-        return ffmpeg.path;
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  private getDestinationPathExtension(destinationFile): SupportedFileFormats {
-    const fileExtension = extname(destinationFile);
-    return fileExtension.includes('.')
-      ? (fileExtension.replace('.', '') as SupportedFileFormats)
-      : (fileExtension as SupportedFileFormats);
-  }
-
-  private configureFFmPegPath(): void {
-    const ffmpegPath = this.getFfmpegPath();
-
-    if (!ffmpegPath) {
-      throw new Error(
-        'FFmpeg path is missing, \n Set the FFMPEG_PATH env variable'
-      );
-    }
-
-    setFfmpegPath(ffmpegPath);
-  }
-
-  private isWritableStream(destinationSource: string | Writable): boolean {
-    if (destinationSource && typeof destinationSource !== 'string') {
-      if (
-        !(destinationSource instanceof Writable) ||
-        !('writable' in destinationSource) ||
-        !destinationSource.writable
-      ) {
-        throw new Error('Output should be a writable stream');
-      }
-      return true;
-    }
-    return false;
-  }
-
-  private configureVideoFile(destinationPath: string): void {
-    const fileExt = this.getDestinationPathExtension(destinationPath);
-
-    if (!SUPPORTED_FILE_FORMATS.includes(fileExt)) {
-      throw new Error('File format is not supported');
-    }
-
-    this.writerPromise = new Promise((resolve) => {
-      const outputStream = this.getDestinationStream();
-
+    this.writerPromise = new Promise((resolve, reject) => {
       outputStream
-        .on('error', (e) => {
-          this.handleWriteStreamError(e.message);
-          resolve(false);
+        .on('error', (e: Error) => {
+          this.handleWriteStreamError(e.message)
+          reject(e)
         })
-        .on('end', () => resolve(true))
-        .save(destinationPath);
+        .on('end', resolve)
+        .save(destinationPath)
 
-      if (fileExt == SupportedFileFormats.WEBM) {
+      if (outputFormat == 'webm') {
         outputStream
-          .videoCodec('libvpx')
           .videoBitrate(this.options.videoBitrate || 1000, true)
-          .outputOptions('-flags', '+global_header', '-psnr');
+          .outputOptions('-flags', '+global_header', '-psnr')
       }
-    });
+    })
   }
 
-  private configureVideoWritableStream(writableStream: Writable) {
-    this.writerPromise = new Promise((resolve) => {
-      const outputStream = this.getDestinationStream();
+  private async configureVideoWritableStream(writableStream: Writable) {
+    const outputStream = await this.getDestinationStream(this.outputFormat, this.videoStreamCodec())
 
-      outputStream
-        .on('error', (e) => {
-          writableStream.emit('error', e);
-          resolve(false);
-        })
-        .on('end', () => {
-          writableStream.end();
-          resolve(true);
-        });
+    this.writerPromise = new Promise<void>((resolve, reject) => {
+      try {
+        outputStream
+          .on('error', (e) => {
+            writableStream.emit('error', e)
+            reject(e)
+          })
+          .on('end', () => {
+            writableStream.end()
+            resolve()
+          })
 
-      outputStream.toFormat('mp4');
-      outputStream.addOutputOptions(
-        '-movflags +frag_keyframe+separate_moof+omit_tfhd_offset+empty_moov'
-      );
-      outputStream.pipe(writableStream);
-    });
+        outputStream.toFormat(this.outputFormat)
+        if (this.outputFormat == 'webm') {
+          outputStream
+            .videoBitrate(this.options.videoBitrate || 1000, true)
+            .addOutputOptions('-flags', '+global_header', '-psnr')
+        }
+        outputStream.addOutputOptions(
+          '-movflags +frag_keyframe+separate_moof+omit_tfhd_offset+empty_moov'
+        )
+
+        outputStream.pipe(writableStream)
+      } catch (error) {
+        reject(error)
+      }
+    })
   }
 
-  private getDestinationStream(): ffmpeg {
-    const cpu = Math.max(1, os.cpus().length - 1);
+  private async getDestinationStream(
+    outputFormat: SupportedVideoFileFormat,
+    videoCodec: string
+  ): Promise<FfmpegCommand> {
+    await checkVideoCodec(videoCodec)
+    const threads = Math.max(1, os.cpus().length - 1)
+
     const outputStream = ffmpeg({
       source: this.videoMediatorStream,
       priority: 20,
     })
-      .videoCodec(this.options.videoCodec || 'libx264')
+      .videoCodec(videoCodec)
       .size(this.videoFrameSize)
       .aspect(this.options.aspectRatio || '4:3')
       .autopad(this.autopad.activation, this.autopad?.color)
       .inputFormat('image2pipe')
-      .inputFPS(this.options.fps)
+      .inputFPS(this.fps)
       .outputOptions(`-crf ${this.options.videoCrf ?? 23}`)
-      .outputOptions(`-preset ${this.options.videoPreset || 'ultrafast'}`)
-      .outputOptions(`-pix_fmt ${this.options.videoPixelFormat || 'yuv420p'}`)
-      .outputOptions(`-minrate ${this.options.videoBitrate || 1000}`)
-      .outputOptions(`-maxrate ${this.options.videoBitrate || 1000}`)
-      .outputOptions('-framerate 1')
-      .outputOptions(`-threads ${cpu}`)
-      .on('progress', (progressDetails) => {
-        this.duration = progressDetails.timemark;
-      });
+
+    if (outputFormat !== 'webm') {
+      outputStream
+        .outputOptions(`-preset ${this.options.videoPreset || 'ultrafast'}`)
+        .outputOptions(`-pix_fmt ${this.options.videoPixelFormat || 'yuv420p'}`)
+        .outputOptions(`-minrate ${this.options.videoBitrate || 1000}`)
+        .outputOptions(`-maxrate ${this.options.videoBitrate || 1000}`)
+        .outputOptions('-framerate 1')
+    }
+
+    if (outputFormat === 'webm') {
+      outputStream
+        .outputOptions('-quality realtime')
+        .outputOptions('-speed 8')
+        .outputOptions('-qmin 4')
+        .outputOptions('-qmax 48')
+        .outputOptions('-tile-columns 4')
+        .outputOptions('-frame-parallel 1')
+        .outputOptions('-row-mt 1')
+        .outputOptions('-g 20')
+    }
+
+    outputStream.outputOptions(`-threads ${threads}`).on('progress', (progressDetails) => {
+      this.duration = progressDetails.timemark
+    })
 
     if (this.options.recordDurationLimit) {
-      outputStream.duration(this.options.recordDurationLimit);
+      outputStream.duration(this.options.recordDurationLimit)
     }
 
-    return outputStream;
+    return outputStream
   }
 
-  private handleWriteStreamError(errorMessage): void {
-    this.emit('videoStreamWriterError', errorMessage);
+  private get outputFormat(): SupportedVideoFileFormat {
+    return this.options.outputFormat || 'mp4'
+  }
+
+  private handleWriteStreamError(errorMessage: string): void {
+    this.emit('videoStreamWriterError', errorMessage)
 
     if (
-      this.status !== VIDEO_WRITE_STATUS.IN_PROGRESS &&
+      this.status !== 'inProgress' &&
+      this.status !== 'stopping' &&
       errorMessage.includes('pipe:0: End of file')
-    ) {
-      return;
-    }
-    return console.error(
-      `Error unable to capture video stream: ${errorMessage}`
-    );
+    )
+      return
+
+    return console.error(`Error unable to capture video stream: ${errorMessage}`)
   }
 
   private findSlot(timestamp: number): number {
-    if (this.screenCastFrames.length === 0) {
-      return 0;
-    }
+    if (this.screenCastFrames.length === 0) return 0
 
-    let i: number;
-    let frame: pageScreenFrame;
+    let i: number
+    let frame: PageScreenFrame
 
     for (i = this.screenCastFrames.length - 1; i >= 0; i--) {
-      frame = this.screenCastFrames[i];
+      frame = this.screenCastFrames[i]
 
-      if (timestamp > frame.timestamp) {
-        break;
-      }
+      if (timestamp > frame.timestamp) break
     }
 
-    return i + 1;
+    return i + 1
   }
 
-  public insert(frame: pageScreenFrame): void {
+  insert(frame: PageScreenFrame): void {
+    if (this.status === 'stopping' || this.status === 'completed') return
+
     // reduce the queue into half when it is full
     if (this.screenCastFrames.length === this.screenLimit) {
-      const numberOfFramesToSplice = Math.floor(this.screenLimit / 2);
-      const framesToProcess = this.screenCastFrames.splice(
-        0,
-        numberOfFramesToSplice
-      );
-      this.processFrameBeforeWrite(framesToProcess, this.screenCastFrames[0].timestamp);
+      const numberOfFramesToSplice = Math.floor(this.screenLimit / 2)
+      const framesToProcess = this.screenCastFrames.splice(0, numberOfFramesToSplice)
+      this.processFrameBeforeWrite(framesToProcess, this.screenCastFrames[0].timestamp)
     }
 
-    const insertionIndex = this.findSlot(frame.timestamp);
+    const insertionIndex = this.findSlot(frame.timestamp)
 
     if (insertionIndex === this.screenCastFrames.length) {
-      this.screenCastFrames.push(frame);
+      this.screenCastFrames.push(frame)
     } else {
-      this.screenCastFrames.splice(insertionIndex, 0, frame);
+      this.screenCastFrames.splice(insertionIndex, 0, frame)
     }
   }
 
-  private trimFrame(fameList: pageScreenFrame[], chunckEndTime: number): pageScreenFrame[] {
-    return fameList.map((currentFrame: pageScreenFrame, index: number) => {
-      const endTime = (index !== fameList.length-1) ? fameList[index+1].timestamp : chunckEndTime;
-      const duration = endTime - currentFrame.timestamp; 
-        
-      return {
-        ...currentFrame,
-        duration,
-      };
-    });
-  }
+  async stop(stoppedTime = Date.now() / 1000): Promise<void> {
+    if (!this.writerPromise)
+      throw new Error('Writer promise not initialized: did startStreamWriter() throw?')
 
-  private processFrameBeforeWrite(frames: pageScreenFrame[], chunckEndTime: number): void {
-    const processedFrames = this.trimFrame(frames, chunckEndTime);
+    if (this.status === 'completed' || this.status === 'stopping') return this.writerPromise
 
-    processedFrames.forEach(({ blob, duration }) => {
-      this.write(blob, duration);
-    });
-  }
+    this.status = 'stopping'
+    this.drainFrames(stoppedTime)
 
-  public write(data: Buffer, durationSeconds = 1): void {
-    this.status = VIDEO_WRITE_STATUS.IN_PROGRESS;
+    this.videoMediatorStream.end()
+    this.status = 'completed'
 
-    const NUMBER_OF_FPS = Math.max(
-      Math.floor(durationSeconds * this.options.fps),
-      1
-    );
-
-    for (let i = 0; i < NUMBER_OF_FPS; i++) {
-      this.videoMediatorStream.write(data);
-    }
+    await this.writerPromise
   }
 
   private drainFrames(stoppedTime: number): void {
-    this.processFrameBeforeWrite(this.screenCastFrames, stoppedTime);
-    this.screenCastFrames = [];
+    this.processFrameBeforeWrite(this.screenCastFrames, stoppedTime)
+    this.screenCastFrames = []
   }
 
-  public stop(stoppedTime = Date.now() / 1000): Promise<boolean> {
-    if (this.status === VIDEO_WRITE_STATUS.COMPLETED) {
-      return this.writerPromise;
+  private processFrameBeforeWrite(frames: PageScreenFrame[], chunkEndTime: number): void {
+    const processedFrames = this.trimFrame(frames, chunkEndTime)
+
+    processedFrames.forEach(({ blob, duration }) => this.write(blob, duration))
+  }
+
+  private trimFrame(fameList: PageScreenFrame[], chunkEndTime: number): PageScreenFrame[] {
+    return fameList.map((currentFrame: PageScreenFrame, index: number) => {
+      const endTime = index !== fameList.length - 1 ? fameList[index + 1].timestamp : chunkEndTime
+      const duration = endTime - currentFrame.timestamp
+
+      return { ...currentFrame, duration }
+    })
+  }
+
+  private write(data: Buffer, durationSeconds = 1): void {
+    if (this.status === 'notStarted') this.status = 'inProgress'
+
+    const numberOfFps = Math.max(Math.floor(durationSeconds * this.fps), 1)
+
+    for (let i = 0; i < numberOfFps; i++) {
+      if (this.videoMediatorStream.writable) this.videoMediatorStream.write(data)
+    }
+  }
+
+  private async configureFfmpegPath(): Promise<void> {
+    const ffmpegPath = await this.getFfmpegPath()
+
+    if (!ffmpegPath) {
+      throw new Error('FFmpeg path is missing, \n Set the FFMPEG_PATH env variable')
     }
 
-    this.drainFrames(stoppedTime);
-
-    this.videoMediatorStream.end();
-    this.status = VIDEO_WRITE_STATUS.COMPLETED;
-    return this.writerPromise;
+    setFfmpegPath(ffmpegPath)
   }
+
+  private async getFfmpegPath(): Promise<string | null> {
+    if (this.options.ffmpegPath) return this.options.ffmpegPath
+
+    try {
+      // eslint-disable-next-line import/no-extraneous-dependencies
+      const ffmpegInstaller = await import('@ffmpeg-installer/ffmpeg')
+      if (ffmpegInstaller.path) return ffmpegInstaller.path
+
+      return null
+    } catch (e) {
+      return null
+    }
+  }
+
+  private get fps(): number {
+    return this.options.fps ?? 25
+  }
+
+  private videoFileCodec(filePath: string): string {
+    return this.options.videoCodec
+      ? this.options.videoCodec
+      : fileFormatFor(filePath) === 'webm'
+      ? 'libvpx-vp9'
+      : 'libx265'
+  }
+
+  private videoStreamCodec(): string {
+    return this.options.videoCodec
+      ? this.options.videoCodec
+      : this.options.outputFormat === 'webm'
+      ? 'libvpx-vp9'
+      : 'libx265'
+  }
+
+  private get videoFrameSize(): string {
+    const { width, height } = this.options.videoFrame || {}
+    return typeof width === 'number' && typeof height === 'number' ? `${width}x${height}` : '100%'
+  }
+
+  private get autopad(): { activation: boolean; color?: string } {
+    const autopad = this.options.autopad
+
+    return !autopad ? { activation: false } : { activation: true, color: autopad.color }
+  }
+}
+
+async function checkVideoCodec(codec: string) {
+  const availableCodecsMap = await getAvailableCodecs()
+  const found = availableCodecsMap[codec]
+
+  if (!found || !found.canEncode) {
+    const list = listAvailableEncodingCodecs(availableCodecsMap)
+    throw new Error(`Video codec ${codec} is not available for encoding. Available codecs:\n${list}`)
+  }
+}
+
+function getAvailableCodecs() {
+  return new Promise<Codecs>((resolve, reject) =>
+    ffmpeg().getAvailableCodecs((err, codecs) => {
+      if (err) reject(err)
+      else resolve(codecs)
+    })
+  )
+}
+
+function listAvailableEncodingCodecs(availableCodecsMap: Record<string, Codec>) {
+  return Object.entries(availableCodecsMap)
+    .filter(([, { canEncode }]) => canEncode)
+    .map(([codec, { description }]) => `- ${codec}: ${description}`)
+    .join('\n')
 }
