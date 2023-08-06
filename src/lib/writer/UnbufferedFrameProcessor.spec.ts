@@ -1,7 +1,7 @@
 import { PassThrough } from 'stream'
 import { describe, expect, it } from 'vitest'
 import { PageScreenFrame } from '../PageScreenFrame'
-import { FrameProcessor } from './FrameProcessor'
+import { UnbufferedFrameProcessor } from './UnbufferedFrameProcessor'
 
 describe('FrameProcessor', () => {
   describe('frames at 1s, 2s, 3s', () => {
@@ -234,13 +234,13 @@ function generateFrames(fromSecond: number, upToSecond: number, fps: number): Pa
   return frames
 }
 
-function processFrames(processor: FrameProcessor, frames: PageScreenFrame[]) {
+function processFrames(processor: UnbufferedFrameProcessor, frames: PageScreenFrame[]) {
   frames.forEach((f) => processor.processFrame(f))
 }
 
 function createFrameProcessor({ fps }: { fps: number }) {
   const stream = new PassThroughWithBuffer({ encoding: 'utf-8' })
-  const processor = new FrameProcessor({ fps }, stream)
+  const processor = new UnbufferedFrameProcessor({ fps }, stream)
   return { processor, stream }
 }
 

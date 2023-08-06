@@ -4,9 +4,9 @@ import ffmpeg, { FfmpegCommand, setFfmpegPath } from 'fluent-ffmpeg'
 import { TypedEmitter } from 'tiny-typed-emitter'
 import { PageScreenFrame } from '../PageScreenFrame'
 import { validateVideoCodec } from '../videoCodecs'
-import { FrameProcessor } from './FrameProcessor'
 import { OutputFormat, outputFormatFor } from './OutputFormat'
 import { PageVideoStreamWriterOptions } from './PageVideoStreamWriterOptions'
+import { UnbufferedFrameProcessor } from './UnbufferedFrameProcessor'
 import { VideoWriteStatus } from './VideoWriteStatus'
 
 export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEvents> {
@@ -18,14 +18,14 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
 
   private videoMediatorStream: PassThrough = new PassThrough()
   private writerPromise: Promise<void> | undefined
-  private frameProcessor: FrameProcessor
+  private frameProcessor: UnbufferedFrameProcessor
 
   constructor(
     private destination: string | Writable,
     private options: PageVideoStreamWriterOptions
   ) {
     super()
-    this.frameProcessor = new FrameProcessor(options, this.videoMediatorStream)
+    this.frameProcessor = new UnbufferedFrameProcessor(options, this.videoMediatorStream)
   }
 
   async startStreamWriter(): Promise<void> {

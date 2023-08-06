@@ -8,7 +8,7 @@ import {
   toDefinedOptions,
 } from './PuppeteerScreenRecorderOptions'
 import { PageVideoStreamReader } from './reader/PageVideoStreamReader'
-import { PageVideoStreamWriter } from './writer/pageVideoStreamWriter'
+import { PageVideoStreamWriter } from './writer/PageVideoStreamWriterTmp'
 
 /**
  * PuppeteerScreenRecorder class is responsible for managing the video

@@ -1,7 +1,7 @@
 export { PuppeteerScreenRecorder } from './lib/PuppeteerScreenRecorder'
 export { PageScreenFrame } from './lib/PageScreenFrame'
 export { PageVideoStreamReader as PageVideoStreamCollector } from './lib/reader/PageVideoStreamReader'
-export { PageVideoStreamWriter } from './lib/writer/pageVideoStreamWriter'
+export { PageVideoStreamWriter } from './lib/writer/PageVideoStreamWriterTmp'
 export { PuppeteerScreenRecorderOptions } from './lib/PuppeteerScreenRecorderOptions'
 export { VideoWriteStatus } from './lib/writer/VideoWriteStatus'
 export {

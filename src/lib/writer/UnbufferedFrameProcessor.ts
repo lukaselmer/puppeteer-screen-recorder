@@ -1,12 +1,12 @@
 import { PageScreenFrame } from '../PageScreenFrame'
 
-export class FrameProcessor {
+export class UnbufferedFrameProcessor {
   private previousFrame: PageScreenFrame | undefined
   private lastWriteTime: number | undefined
   private frameDuration: number
 
   constructor(
-    private options: FrameProcessorOptions,
+    private options: UnbufferedFrameProcessorOptions,
     private outputStream: NodeJS.WritableStream
   ) {
     this.frameDuration = 1 / this.options.fps
@@ -43,6 +43,6 @@ export class FrameProcessor {
   }
 }
 
-export interface FrameProcessorOptions {
+export interface UnbufferedFrameProcessorOptions {
   fps: number
 }
