@@ -1,4 +1,5 @@
 import { PageScreenFrame } from '../PageScreenFrame'
+import { UnbufferedFrameProcessorOptions } from './UnbufferedFrameProcessorOptions'
 
 export class UnbufferedFrameProcessor {
   private previousFrame: PageScreenFrame | undefined
@@ -45,7 +46,3 @@ export class UnbufferedFrameProcessor {
 }
 
 export const frameIsOutOfOrderErrorMessage = 'Frame is out of order'
-
-export interface UnbufferedFrameProcessorOptions {
-  fps: number
-}

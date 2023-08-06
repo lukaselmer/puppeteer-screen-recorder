@@ -9,6 +9,7 @@ export async function validateVideoCodec(codec: string) {
     throw new Error(`Video codec ${codec} is not available for encoding. Available codecs:\n${list}`)
   }
 }
+
 function availableCodecs() {
   return new Promise<Codecs>((resolve, reject) =>
     ffmpeg().getAvailableCodecs((err, codecs) => {
@@ -17,6 +18,7 @@ function availableCodecs() {
     })
   )
 }
+
 function listAvailableEncodingCodecs(availableCodecsMap: Record<string, Codec>) {
   return Object.entries(availableCodecsMap)
     .filter(([, { canEncode }]) => canEncode)

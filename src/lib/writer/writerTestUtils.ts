@@ -1,7 +1,8 @@
 import { PassThrough } from 'stream'
 import { Logger } from '../logger'
 import { PageScreenFrame } from '../PageScreenFrame'
-import { BufferedFrameProcessor, BufferedFrameProcessorOptions } from './BufferedFrameProcessor'
+import { BufferedFrameProcessor } from './BufferedFrameProcessor'
+import { BufferedFrameProcessorOptions } from './BufferedFrameProcessorOptions'
 import { UnbufferedFrameProcessor } from './UnbufferedFrameProcessor'
 
 export function threeFrameAt1s2s3s(): PageScreenFrame[] {

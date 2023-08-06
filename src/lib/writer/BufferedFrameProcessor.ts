@@ -1,5 +1,6 @@
 import { Logger } from '../logger'
 import { PageScreenFrame } from '../PageScreenFrame'
+import { BufferedFrameProcessorOptions } from './BufferedFrameProcessorOptions'
 import { SortedQueue } from './SortedQueue'
 import { frameIsOutOfOrderErrorMessage, UnbufferedFrameProcessor } from './UnbufferedFrameProcessor'
 
@@ -44,9 +45,4 @@ export class BufferedFrameProcessor {
       else throw error
     }
   }
-}
-
-export interface BufferedFrameProcessorOptions {
-  fps: number
-  inputFramesToBuffer: number
 }
