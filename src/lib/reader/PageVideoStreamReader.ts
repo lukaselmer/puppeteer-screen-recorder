@@ -1,5 +1,6 @@
 import { CDPSession, Page } from 'puppeteer'
 import { TypedEmitter } from 'tiny-typed-emitter'
+import { Logger } from '../logger'
 import { PageScreenFrame } from '../PageScreenFrame'
 import { PageVideoStreamReaderOptions } from './PageVideoStreamReaderOptions'
 
@@ -12,7 +13,11 @@ export class PageVideoStreamReader extends TypedEmitter<PageVideoStreamReaderEve
 
   private frameAckReceived: Promise<void> | undefined
 
-  constructor(page: Page, options: PageVideoStreamReaderOptions) {
+  constructor(
+    private logger: Logger,
+    page: Page,
+    options: PageVideoStreamReaderOptions
+  ) {
     super()
     this.page = page
     this.options = options
@@ -37,7 +42,7 @@ export class PageVideoStreamReader extends TypedEmitter<PageVideoStreamReaderEve
     try {
       for (const currentSession of this.sessionsStack) await currentSession.detach()
     } catch (e) {
-      console.warn('Error detaching session', (e as Error).message)
+      this.logger.warn('Error detaching session', (e as Error).message)
     }
   }
 
@@ -55,7 +60,7 @@ export class PageVideoStreamReader extends TypedEmitter<PageVideoStreamReaderEve
   }
 
   private async startSession(page: Page): Promise<void> {
-    const pageSession = await createCDPSession(page)
+    const pageSession = await createCDPSession(this.logger, page)
     if (!pageSession) return
 
     await this.stopScreenCast()
@@ -87,7 +92,7 @@ export class PageVideoStreamReader extends TypedEmitter<PageVideoStreamReaderEve
         try {
           await ackPromise
         } catch (error) {
-          console.error('Error sending screencastFrameAck', (error as Error)?.message)
+          this.logger.error('Error sending screencastFrameAck', error)
         }
       })
     })
@@ -97,7 +102,7 @@ export class PageVideoStreamReader extends TypedEmitter<PageVideoStreamReaderEve
     try {
       await this.endSession()
     } catch (error) {
-      console.error('Error while ending the session', error)
+      this.logger.error('Error while ending the session', error)
     }
   }
 
@@ -130,11 +135,11 @@ export class PageVideoStreamReader extends TypedEmitter<PageVideoStreamReaderEve
   }
 }
 
-async function createCDPSession(page: Page): Promise<CDPSession | null> {
+async function createCDPSession(logger: Logger, page: Page): Promise<CDPSession | null> {
   try {
     return await page.target().createCDPSession()
   } catch (error) {
-    console.log('Failed to create CDP Session', error)
+    logger.log('Failed to create CDP Session', error)
     return null
   }
 }

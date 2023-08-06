@@ -2,6 +2,7 @@ import os from 'os'
 import { PassThrough, Writable } from 'stream'
 import ffmpeg, { FfmpegCommand, setFfmpegPath } from 'fluent-ffmpeg'
 import { TypedEmitter } from 'tiny-typed-emitter'
+import { Logger } from '../logger'
 import { PageScreenFrame } from '../PageScreenFrame'
 import { validateVideoCodec } from '../videoCodecs'
 import { BufferedFrameProcessor } from './BufferedFrameProcessor'
@@ -21,11 +22,12 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
   private frameProcessor: BufferedFrameProcessor
 
   constructor(
+    private logger: Logger,
     private destination: string | Writable,
     private options: PageVideoStreamWriterOptions
   ) {
     super()
-    this.frameProcessor = new BufferedFrameProcessor(options, this.videoMediatorStream)
+    this.frameProcessor = new BufferedFrameProcessor(logger, options, this.videoMediatorStream)
   }
 
   async startStreamWriter(): Promise<void> {
@@ -92,7 +94,7 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
     )
       return
 
-    return console.error(`Error unable to capture video stream`, error)
+    return this.logger.error(`Error unable to capture video stream`, error)
   }
 
   private async configureDestinationStream(writableStream: Writable) {
@@ -303,7 +305,7 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
 
       return null
     } catch (e) {
-      console.error(e)
+      this.logger.error(e)
       return null
     }
   }

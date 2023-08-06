@@ -1,12 +1,14 @@
+import { Logger } from '../logger'
 import { PageScreenFrame } from '../PageScreenFrame'
 import { SortedQueue } from './SortedQueue'
-import { UnbufferedFrameProcessor } from './UnbufferedFrameProcessor'
+import { frameIsOutOfOrderErrorMessage, UnbufferedFrameProcessor } from './UnbufferedFrameProcessor'
 
 export class BufferedFrameProcessor {
   private readonly buffer: SortedQueue<PageScreenFrame> = new SortedQueue((frame) => frame.timestamp)
   private readonly unbufferedFrameProcessor: UnbufferedFrameProcessor
 
   constructor(
+    private readonly logger: Logger,
     private options: BufferedFrameProcessorOptions,
     outputStream: NodeJS.WritableStream
   ) {
@@ -16,18 +18,31 @@ export class BufferedFrameProcessor {
   processFrame(frame: PageScreenFrame): void {
     this.buffer.enqueue(frame)
 
-    while (this.buffer.length > Math.max(0, this.options.inputFramesToBuffer)) {
-      const frameToProcess = this.buffer.removeMinimum()
-      if (!frameToProcess) throw new Error('Invalid state: buffer is empty')
-
-      this.unbufferedFrameProcessor.processFrame(frameToProcess)
-    }
+    const upToLength = Math.max(0, this.options.inputFramesToBuffer)
+    this.processBufferedFrames(upToLength)
   }
 
   drainFrames(): void {
-    this.buffer
-      .removeAllSortedByMinimumFirst()
-      .forEach((frame) => this.unbufferedFrameProcessor.processFrame(frame))
+    this.processBufferedFrames(0)
+  }
+
+  private processBufferedFrames(upToLength: number) {
+    while (this.buffer.length > upToLength) {
+      const frameToProcess = this.buffer.removeMinimum()
+      if (!frameToProcess) throw new Error('Invalid state: buffer is empty')
+
+      this.gracefulProcessBufferedFrame(frameToProcess)
+    }
+  }
+
+  gracefulProcessBufferedFrame(frameToProcess: PageScreenFrame) {
+    try {
+      this.unbufferedFrameProcessor.processFrame(frameToProcess)
+    } catch (error) {
+      if (error instanceof Error && error.message === frameIsOutOfOrderErrorMessage)
+        this.logger.warn('Frame is out of order, skipping frame')
+      else throw error
+    }
   }
 }
 

@@ -14,9 +14,11 @@ export class UnbufferedFrameProcessor {
 
   processFrame(frame: PageScreenFrame): void {
     if (this.previousFrame && this.previousFrame.timestamp > frame.timestamp)
-      throw new Error('Frame is out of order')
+      throw new Error(frameIsOutOfOrderErrorMessage)
 
     if (this.previousFrame && this.previousFrame.timestamp === frame.timestamp) return
+
+    this.previousFrame = frame
 
     this.handleWrite(frame)
   }
@@ -41,6 +43,8 @@ export class UnbufferedFrameProcessor {
     }
   }
 }
+
+export const frameIsOutOfOrderErrorMessage = 'Frame is out of order'
 
 export interface UnbufferedFrameProcessorOptions {
   fps: number

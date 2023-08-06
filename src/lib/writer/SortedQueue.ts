@@ -28,17 +28,7 @@ export class SortedQueue<T> {
     this.sortedByMinimumFirst.unshift(el)
   }
 
-  removeAllSortedByMinimumFirst(): T[] {
-    const clone = [...this.sortedByMinimumFirst]
-    clearArray(this.sortedByMinimumFirst)
-    return clone
-  }
-
   removeMinimum(): T | undefined {
     return this.sortedByMinimumFirst.shift()
   }
-}
-
-function clearArray(array: any[]): void {
-  array.splice(0, array.length)
 }

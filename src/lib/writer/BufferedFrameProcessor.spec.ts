@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  batchOf100x1s100x3s100x2s,
   createBufferedFrameProcessor,
   inconsistentFpsInputBetween1sAnd10s,
   inputWithWrongOrderAt10FpsInputBetween1sAnd5s,
@@ -108,6 +109,24 @@ describe('BufferedFrameProcessor', () => {
       expect(stream.frameCount('2')).toMatchInlineSnapshot('0')
       expect(stream.frameCount('3')).toMatchInlineSnapshot('0')
       expect(stream.totalFrameCount()).toMatchInlineSnapshot('1')
+    })
+  })
+
+  describe('invalid order', () => {
+    it('skips frames which are out of order when buffer is not large enough', () => {
+      const { processor, stream, logger } = createBufferedFrameProcessor({
+        fps: 1,
+        inputFramesToBuffer: 10,
+      })
+      processFrames(processor, batchOf100x1s100x3s100x2s())
+      expect(stream.read()).toMatchInlineSnapshot('"1,3,3,"')
+      expect(logger.logs.length).toMatchInlineSnapshot('100')
+      const stringifiedLogs = logger.logs.map((log) => JSON.stringify(log))
+      expect(new Set(stringifiedLogs)).toMatchInlineSnapshot(`
+        Set {
+          "[\\"Frame is out of order, skipping frame\\"]",
+        }
+      `)
     })
   })
 })

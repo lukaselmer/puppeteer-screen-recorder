@@ -206,4 +206,13 @@ describe('UnbufferedFrameProcessor', () => {
       expect(stream.totalFrameCount()).toMatchInlineSnapshot('1')
     })
   })
+
+  describe('invalid order', () => {
+    it('throws an error when the frames are not in order', () => {
+      const { processor } = createUnbufferedFrameProcessor({ fps: 1 })
+      expect(() => {
+        processFrames(processor, threeFrameAt1s3s2s())
+      }).toThrowErrorMatchingInlineSnapshot('"Frame is out of order"')
+    })
+  })
 })

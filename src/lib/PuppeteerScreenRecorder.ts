@@ -2,6 +2,7 @@ import { mkdir } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { Writable } from 'node:stream'
 import { Page } from 'puppeteer'
+import { Logger } from './logger'
 import {
   DefinedPuppeteerScreenRecorderOptions,
   PuppeteerScreenRecorderOptions,
@@ -35,10 +36,11 @@ export class PuppeteerScreenRecorder {
 
   constructor(
     private page: Page,
-    options: PuppeteerScreenRecorderOptions = {}
+    options: PuppeteerScreenRecorderOptions = {},
+    private logger: Logger = console
   ) {
     this.options = toDefinedOptions(options)
-    this.streamReader = new PageVideoStreamReader(page, this.options.inputOptions)
+    this.streamReader = new PageVideoStreamReader(logger, page, this.options.inputOptions)
   }
 
   /**
@@ -63,7 +65,7 @@ export class PuppeteerScreenRecorder {
   async statWritingToFile(savePath: string): Promise<void> {
     await this.ensureDirectoryExist(dirname(savePath))
 
-    this.streamWriter = new PageVideoStreamWriter(savePath, this.options.outputOptions)
+    this.streamWriter = new PageVideoStreamWriter(this.logger, savePath, this.options.outputOptions)
     await this.streamWriter.startStreamWriter()
     await this.startStreamReader()
   }
@@ -81,7 +83,7 @@ export class PuppeteerScreenRecorder {
    * ```
    */
   async startWritingToStream(stream: Writable): Promise<void> {
-    this.streamWriter = new PageVideoStreamWriter(stream, this.options.outputOptions)
+    this.streamWriter = new PageVideoStreamWriter(this.logger, stream, this.options.outputOptions)
     await this.streamWriter.startStreamWriter()
     await this.startStreamReader()
   }
@@ -103,7 +105,7 @@ export class PuppeteerScreenRecorder {
 
     this.streamWriter.once('videoStreamWriterError', async (error) => {
       this.recorderErrors.push(error as Error)
-      console.error('Error from vide stream writer', error)
+      this.logger.error('Error from vide stream writer', error)
       await this.gracefulStop()
     })
   }
@@ -113,7 +115,7 @@ export class PuppeteerScreenRecorder {
       await this.stop()
     } catch (error) {
       this.recorderErrors.push(error as Error)
-      console.error('Error while stopping the video recording', error)
+      this.logger.error('Error while stopping the video recording', error)
     }
   }
 

@@ -1,10 +1,19 @@
 import { PassThrough } from 'stream'
+import { Logger } from '../logger'
 import { PageScreenFrame } from '../PageScreenFrame'
-import { BufferedFrameProcessor } from './BufferedFrameProcessor'
+import { BufferedFrameProcessor, BufferedFrameProcessorOptions } from './BufferedFrameProcessor'
 import { UnbufferedFrameProcessor } from './UnbufferedFrameProcessor'
 
 export function threeFrameAt1s2s3s(): PageScreenFrame[] {
   return [frame(1), frame(2), frame(3)]
+}
+
+export function batchOf100x1s100x3s100x2s(): PageScreenFrame[] {
+  return [...nFrames(1, 100), ...nFrames(3, 100), ...nFrames(2, 100)]
+}
+
+export function nFrames(timestamp: number, times: number): PageScreenFrame[] {
+  return Array.from({ length: times }, () => frame(timestamp))
 }
 
 export function threeFrameAt1s3s2s(): PageScreenFrame[] {
@@ -56,10 +65,15 @@ export function processFrames(
   if ('drainFrames' in processor) processor.drainFrames()
 }
 
-export function createBufferedFrameProcessor({ fps }: { fps: number }) {
+export function createBufferedFrameProcessor(options: Partial<BufferedFrameProcessorOptions>) {
   const stream = new PassThroughWithBuffer({ encoding: 'utf-8' })
-  const processor = new BufferedFrameProcessor({ fps, inputFramesToBuffer: 100 }, stream)
-  return { processor, stream }
+  const logger = inMemoryLogger()
+  const processor = new BufferedFrameProcessor(
+    logger,
+    { inputFramesToBuffer: 100, fps: 1, ...options },
+    stream
+  )
+  return { processor, stream, logger }
 }
 
 export function createUnbufferedFrameProcessor({ fps }: { fps: number }) {
@@ -90,4 +104,18 @@ class PassThroughWithBuffer extends PassThrough {
     if (typeof this.buffer !== 'string') throw new Error('Buffer is not a string')
     return this.buffer.split(',').length - 1
   }
+}
+
+function inMemoryLogger(): TestLogger {
+  const logs: any[] = []
+  return {
+    log: (...args) => void logs.push(args),
+    warn: (...args) => void logs.push(args),
+    error: (...args) => void logs.push(args),
+    logs,
+  }
+}
+
+interface TestLogger extends Logger {
+  logs: any[]
 }
