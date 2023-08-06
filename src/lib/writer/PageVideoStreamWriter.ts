@@ -142,6 +142,10 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
       .inputFPS(this.fps)
       .outputOptions(`-crf ${this.options.videoCrf ?? 23}`)
 
+    Object.entries(this.options.metadata).forEach(([key, value]) => {
+      outputStream.outputOptions('-metadata', `${key}=${value}`)
+    })
+
     if (this.options.keyframeIntervalInSeconds)
       outputStream.outputOptions(`-g ${this.options.keyframeIntervalInSeconds * this.options.fps}`)
 

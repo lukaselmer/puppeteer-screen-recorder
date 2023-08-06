@@ -26,6 +26,7 @@ export function toDefinedOptions(
     autoStopAfterSeconds,
     logger = console,
     keyframeIntervalInSeconds,
+    metadata = {},
   } = options
 
   if (fps < 0) throw new Error('fps must be at least 0')
@@ -62,6 +63,7 @@ export function toDefinedOptions(
     keyframeIntervalInSeconds,
     autoStopAfterSeconds,
     logger,
+    metadata,
   }
   return { inputOptions, outputOptions, logger }
 }
@@ -184,6 +186,14 @@ export interface PuppeteerScreenRecorderOptions {
    * @default console
    */
   readonly logger?: Logger
+
+  /**
+   * @description Specify metadata information as key value pairs. For more information, see:
+   * https://ffmpeg.org/doxygen/trunk/group__metadata__api.html
+   * https://wiki.multimedia.cx/index.php/FFmpeg_Metadata
+   * https://write.corbpie.com/adding-metadata-to-a-video-or-audio-file-with-ffmpeg/
+   */
+  readonly metadata?: Record<string, string>
 }
 
 export interface DefinedPuppeteerScreenRecorderOptions {
