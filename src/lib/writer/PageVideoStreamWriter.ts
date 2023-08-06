@@ -33,12 +33,6 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
     if (typeof this.destination === 'string') await this.configureDestinationFile(this.destination)
     else if (this.destination.writable) await this.configureDestinationStream(this.destination)
     else throw new Error('Output should be a path or a writable stream')
-
-    if (this.options.autoStopAfterSeconds) {
-      setTimeout(async () => {
-        await this.gracefulStop()
-      }, this.options.autoStopAfterSeconds * 1000)
-    }
   }
 
   private async configureDestinationFile(destinationPath: string) {
@@ -199,14 +193,6 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
     this.frameProcessor.processFrame(frame)
   }
 
-  private async gracefulStop() {
-    try {
-      await this.stop()
-    } catch (error) {
-      this.emit('videoStreamWriterError', error as Error)
-    }
-  }
-
   async stop(): Promise<void> {
     if (!this.writerPromise)
       throw new Error('Writer promise not initialized: did startStreamWriter() throw?')
@@ -268,6 +254,10 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
 
   private get logger() {
     return this.options.logger
+  }
+
+  get stopped() {
+    return this.status === 'completed'
   }
 }
 

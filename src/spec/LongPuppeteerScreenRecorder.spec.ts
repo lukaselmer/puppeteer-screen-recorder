@@ -33,7 +33,7 @@ describe.concurrent(
       { retry: 0 }
     )
 
-    it(`Streams the video to ${outputPath('long-libx264.mp4')}`, async ({ expect }) => {
+    it.only(`Streams the video to ${outputPath('long-libx264.mp4')}`, async ({ expect }) => {
       const outputVideoPath = outputPath('long-libx264.mp4')
 
       await withBrowser(async (page) => {
@@ -45,6 +45,7 @@ describe.concurrent(
           fps: 20,
           videoFrame: { width: 1920, height: 1080 },
           videoCodec: 'libx264',
+          autoStopAfterSeconds: 5,
         }
 
         await record(page, options, fileWriteStream)
@@ -68,6 +69,7 @@ describe.concurrent(
           fps: 20,
           videoFrame: { width: 1920, height: 1080 },
           videoCodec: 'libx265',
+          autoStopAfterSeconds: 10,
         }
 
         await record(page, options, fileWriteStream)
@@ -79,7 +81,7 @@ describe.concurrent(
       })
     })
 
-    it.only(`Streams the video to ${outputPath('long-streamed.webm')}`, async ({ expect }) => {
+    it(`Streams the video to ${outputPath('long-streamed.webm')}`, async ({ expect }) => {
       const outputVideoPath = outputPath('long-streamed.webm')
 
       await withBrowser(async (page) => {
@@ -91,6 +93,7 @@ describe.concurrent(
           fps: 20,
           videoCodec: 'libvpx-vp9',
           outputFormat: 'webm',
+          autoStopAfterSeconds: 10,
         }
 
         await record(page, options, fileWriteStream)
@@ -113,31 +116,11 @@ async function record(
   await goToClock(page)
   const recorder = new PuppeteerScreenRecorder(page, options)
   await recorder.startWritingToStream(fileWriteStream)
-  await sleep(10_000)
-  await recorder.stop()
+  await recorder.sleepUntilAutoStopped()
 }
 
 async function goToClock(page: Page) {
   await page.goto('https://clock.zone/europe/zurich', { waitUntil: 'load' })
-}
-
-// async function goToGithubAndGoogle(page: Page) {
-//   await goToGithub(page)
-//   await goToGoogle(page)
-// }
-
-// async function goToGithub(page: Page) {
-//   await page.goto('https://github.com', { waitUntil: 'load' })
-//   await sleep(1000)
-// }
-
-// async function goToGoogle(page: Page) {
-//   await page.goto('https://google.com', { waitUntil: 'load' })
-//   await sleep(1000)
-// }
-
-async function sleep(ms: number) {
-  await new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 function outputPath(filename: string) {

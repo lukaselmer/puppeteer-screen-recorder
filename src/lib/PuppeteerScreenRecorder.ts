@@ -63,7 +63,7 @@ export class PuppeteerScreenRecorder {
   async statWritingToFile(savePath: string): Promise<void> {
     await this.ensureDirectoryExist(dirname(savePath))
 
-    if (this.stopped) throw new Error('Invalid state: recording has already been stopped')
+    if (this.stoppingOrStopped) throw new Error('Invalid state: recording has already been stopped')
 
     this.streamWriter = new PageVideoStreamWriter(savePath, this.options.outputOptions)
     await this.streamWriter.startStreamWriter()
@@ -83,11 +83,18 @@ export class PuppeteerScreenRecorder {
    * ```
    */
   async startWritingToStream(stream: Writable): Promise<void> {
-    if (this.stopped) throw new Error('Invalid state: recording has already been stopped')
+    if (this.stoppingOrStopped) throw new Error('Invalid state: recording has already been stopped')
 
     this.streamWriter = new PageVideoStreamWriter(stream, this.options.outputOptions)
     await this.streamWriter.startStreamWriter()
+    this.setupAutoStop()
     await this.startStreamReader()
+  }
+
+  private setupAutoStop() {
+    if (!this.options.outputOptions.autoStopAfterSeconds) return
+
+    setTimeout(() => this.gracefulStop(), this.options.outputOptions.autoStopAfterSeconds * 1000)
   }
 
   /**
@@ -124,6 +131,17 @@ export class PuppeteerScreenRecorder {
     }
   }
 
+  async sleepUntilAutoStopped() {
+    if (!this.options.outputOptions.autoStopAfterSeconds)
+      throw new Error('Set autoStopAfterSeconds to sleep until auto stop')
+    await this.sleepUntilStopped()
+  }
+
+  async sleepUntilStopped() {
+    while (!this.stoppingOrStopped) await sleep(100)
+    await this.stop()
+  }
+
   /**
    * @description stop the video capturing session
    * @throws {Error} if the video could not be captured
@@ -138,11 +156,15 @@ export class PuppeteerScreenRecorder {
     await this.streamReader.stop()
   }
 
-  private get stopped() {
+  private get stoppingOrStopped() {
     return !!this.stopRecordingPromise
   }
 
   private get logger() {
     return this.options.logger
   }
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
