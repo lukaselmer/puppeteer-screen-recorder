@@ -7,6 +7,10 @@ export function threeFrameAt1s2s3s(): PageScreenFrame[] {
   return [frame(1), frame(2), frame(3)]
 }
 
+export function threeFrameAt1s3s2s(): PageScreenFrame[] {
+  return [frame(1), frame(3), frame(2)]
+}
+
 export function twentyFpsInputBetween1sAnd3s(): PageScreenFrame[] {
   return generateFrames(1, 3.999, 20)
 }
@@ -18,6 +22,16 @@ export function inconsistentFpsInputBetween1sAnd10s(): PageScreenFrame[] {
     ...generateFrames(3, 3.999, 100),
     ...generateFrames(4, 4.999, 1),
     ...generateFrames(5, 5.999, 100),
+  ]
+}
+
+export function inputWithWrongOrderAt10FpsInputBetween1sAnd5s(): PageScreenFrame[] {
+  return [
+    ...generateFrames(1, 1.999, 20),
+    ...generateFrames(3, 3.999, 20),
+    ...generateFrames(2, 2.999, 10),
+    ...generateFrames(5, 5.999, 15),
+    ...generateFrames(4, 4.999, 1),
   ]
 }
 

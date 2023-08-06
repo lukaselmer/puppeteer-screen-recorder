@@ -23,6 +23,7 @@
       { "exceptAfterSingleLine": true }
     ],
     "eslint-comments/disable-enable-pair": ["error", { "allowWholeFile": true }],
+    "no-constant-condition": ["error", { "checkLoops": false }],
     "@typescript-eslint/no-class": "off",
     "eslint-comments/no-unused-disable": "error",
     "sort-imports": ["error", { "ignoreDeclarationSort": true, "ignoreCase": true }],

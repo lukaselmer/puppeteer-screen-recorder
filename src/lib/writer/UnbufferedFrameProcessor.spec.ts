@@ -4,6 +4,7 @@ import {
   inconsistentFpsInputBetween1sAnd10s,
   processFrames,
   threeFrameAt1s2s3s,
+  threeFrameAt1s3s2s,
   twentyFpsInputBetween1sAnd3s,
 } from './writerTestUtils'
 
@@ -140,7 +141,7 @@ describe('UnbufferedFrameProcessor', () => {
     })
   })
 
-  describe('inconsistent fps input between at 1s and 3.999s', () => {
+  describe('inconsistent fps input between at 1s and 10s', () => {
     it('writes single frames at 1fps', () => {
       const { processor, stream } = createUnbufferedFrameProcessor({ fps: 1 })
       processFrames(processor, inconsistentFpsInputBetween1sAnd10s())

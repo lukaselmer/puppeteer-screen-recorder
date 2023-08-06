@@ -30,7 +30,6 @@ export class UnbufferedFrameProcessor {
       return
     }
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const nextWriteTime = this.lastWriteTime + this.frameDuration
       if (currentFrame.timestamp < nextWriteTime) return

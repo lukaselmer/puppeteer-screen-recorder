@@ -1,8 +1,9 @@
 import { PageScreenFrame } from '../PageScreenFrame'
+import { SortedQueue } from './SortedQueue'
 import { UnbufferedFrameProcessor } from './UnbufferedFrameProcessor'
 
 export class BufferedFrameProcessor {
-  private readonly buffer: PageScreenFrame[] = []
+  private readonly buffer: SortedQueue<PageScreenFrame> = new SortedQueue((frame) => frame.timestamp)
   private readonly unbufferedFrameProcessor: UnbufferedFrameProcessor
 
   constructor(
@@ -13,10 +14,10 @@ export class BufferedFrameProcessor {
   }
 
   processFrame(frame: PageScreenFrame): void {
-    this.buffer.push(frame)
+    this.buffer.enqueue(frame)
 
     while (this.buffer.length > Math.max(0, this.options.inputFramesToBuffer)) {
-      const frameToProcess = this.buffer.shift()
+      const frameToProcess = this.buffer.removeMinimum()
       if (!frameToProcess) throw new Error('Invalid state: buffer is empty')
 
       this.unbufferedFrameProcessor.processFrame(frameToProcess)
@@ -24,13 +25,10 @@ export class BufferedFrameProcessor {
   }
 
   drainFrames(): void {
-    this.buffer.forEach((frame) => this.unbufferedFrameProcessor.processFrame(frame))
-    clearArray(this.buffer)
+    this.buffer
+      .removeAllSortedByMinimumFirst()
+      .forEach((frame) => this.unbufferedFrameProcessor.processFrame(frame))
   }
-}
-
-function clearArray(array: any[]): void {
-  array.splice(0, array.length)
 }
 
 export interface BufferedFrameProcessorOptions {
