@@ -1,0 +1,78 @@
+import { PassThrough } from 'stream'
+import { PageScreenFrame } from '../PageScreenFrame'
+import { BufferedFrameProcessor } from './BufferedFrameProcessor'
+import { UnbufferedFrameProcessor } from './UnbufferedFrameProcessor'
+
+export function threeFrameAt1s2s3s(): PageScreenFrame[] {
+  return [frame(1), frame(2), frame(3)]
+}
+
+export function twentyFpsInputBetween1sAnd3s(): PageScreenFrame[] {
+  return generateFrames(1, 3.999, 20)
+}
+
+export function inconsistentFpsInputBetween1sAnd10s(): PageScreenFrame[] {
+  return [
+    ...generateFrames(1, 1.999, 20),
+    ...generateFrames(2, 2.999, 3),
+    ...generateFrames(3, 3.999, 100),
+    ...generateFrames(4, 4.999, 1),
+    ...generateFrames(5, 5.999, 100),
+  ]
+}
+
+function generateFrames(fromSecond: number, upToSecond: number, fps: number): PageScreenFrame[] {
+  let elapsedSeconds = fromSecond
+  const maximumSeconds = upToSecond
+
+  const frames: PageScreenFrame[] = []
+  while (elapsedSeconds < maximumSeconds) {
+    frames.push(frame(Math.round(elapsedSeconds * 100000) / 100000))
+    elapsedSeconds += 1 / fps
+  }
+
+  return frames
+}
+
+export function processFrames(
+  processor: { processFrame(frame: PageScreenFrame): void },
+  frames: PageScreenFrame[]
+) {
+  frames.forEach((f) => processor.processFrame(f))
+}
+
+export function createBufferedFrameProcessor({ fps }: { fps: number }) {
+  const stream = new PassThroughWithBuffer({ encoding: 'utf-8' })
+  const processor = new BufferedFrameProcessor({ fps }, stream)
+  return { processor, stream }
+}
+
+export function createUnbufferedFrameProcessor({ fps }: { fps: number }) {
+  const stream = new PassThroughWithBuffer({ encoding: 'utf-8' })
+  const processor = new UnbufferedFrameProcessor({ fps }, stream)
+  return { processor, stream }
+}
+
+function frame(timestamp: number, optionalText?: string): PageScreenFrame {
+  const text = optionalText ?? timestamp.toString()
+  return { blob: Buffer.from(`${text},`), timestamp }
+}
+
+class PassThroughWithBuffer extends PassThrough {
+  buffer: any
+
+  read(size?: number): string | Buffer {
+    this.buffer = super.read(size)
+    return this.buffer
+  }
+
+  frameCount(content: string) {
+    if (typeof this.buffer !== 'string') throw new Error('Buffer is not a string')
+    return this.buffer.split(',').filter((s) => s === content).length
+  }
+
+  totalFrameCount(): number {
+    if (typeof this.buffer !== 'string') throw new Error('Buffer is not a string')
+    return this.buffer.split(',').length - 1
+  }
+}
