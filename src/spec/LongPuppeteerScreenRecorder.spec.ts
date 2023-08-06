@@ -33,80 +33,83 @@ describe.concurrent(
       { retry: 0 }
     )
 
-    it.only(`Streams the video to ${outputPath('long-libx264.mp4')}`, async ({ expect }) => {
+    {
       const outputVideoPath = outputPath('long-libx264.mp4')
+      it(`Streams the video to ${outputVideoPath}`, async ({ expect }) => {
+        await withBrowser(async (page) => {
+          await mkdir(dirname(outputVideoPath), { recursive: true })
 
-      await withBrowser(async (page) => {
-        await mkdir(dirname(outputVideoPath), { recursive: true })
+          const fileWriteStream = fs.createWriteStream(outputVideoPath)
 
-        const fileWriteStream = fs.createWriteStream(outputVideoPath)
+          const options: PuppeteerScreenRecorderOptions = { ...commonOptions(), videoCodec: 'libx264' }
 
-        const options: PuppeteerScreenRecorderOptions = {
-          fps: 20,
-          videoFrame: { width: 1920, height: 1080 },
-          videoCodec: 'libx264',
-          autoStopAfterSeconds: 5,
-        }
+          await record(page, options, fileWriteStream)
 
-        await record(page, options, fileWriteStream)
-
-        expect(fs.existsSync(outputVideoPath)).toBeTruthy()
-        fileWriteStream.on('end', () => {
-          expect(fileWriteStream.writableFinished).toBeTruthy()
+          expect(fs.existsSync(outputVideoPath)).toBeTruthy()
+          fileWriteStream.on('end', () => {
+            expect(fileWriteStream.writableFinished).toBeTruthy()
+          })
         })
       })
-    })
+    }
 
-    it(`Streams the video to ${outputPath('long-libx265.mp4')}`, async ({ expect }) => {
+    {
       const outputVideoPath = outputPath('long-libx265.mp4')
+      it(`Streams the video to ${outputVideoPath}`, async ({ expect }) => {
+        await withBrowser(async (page) => {
+          await mkdir(dirname(outputVideoPath), { recursive: true })
 
-      await withBrowser(async (page) => {
-        await mkdir(dirname(outputVideoPath), { recursive: true })
+          const fileWriteStream = fs.createWriteStream(outputVideoPath)
 
-        const fileWriteStream = fs.createWriteStream(outputVideoPath)
+          const options: PuppeteerScreenRecorderOptions = { ...commonOptions(), videoCodec: 'libx265' }
 
-        const options: PuppeteerScreenRecorderOptions = {
-          fps: 20,
-          videoFrame: { width: 1920, height: 1080 },
-          videoCodec: 'libx265',
-          autoStopAfterSeconds: 10,
-        }
+          await record(page, options, fileWriteStream)
 
-        await record(page, options, fileWriteStream)
-
-        expect(fs.existsSync(outputVideoPath)).toBeTruthy()
-        fileWriteStream.on('end', () => {
-          expect(fileWriteStream.writableFinished).toBeTruthy()
+          expect(fs.existsSync(outputVideoPath)).toBeTruthy()
+          fileWriteStream.on('end', () => {
+            expect(fileWriteStream.writableFinished).toBeTruthy()
+          })
         })
       })
-    })
+    }
 
-    it(`Streams the video to ${outputPath('long-streamed.webm')}`, async ({ expect }) => {
+    {
       const outputVideoPath = outputPath('long-streamed.webm')
+      it(`Streams the video to ${outputVideoPath}`, async ({ expect }) => {
+        await withBrowser(async (page) => {
+          await mkdir(dirname(outputVideoPath), { recursive: true })
 
-      await withBrowser(async (page) => {
-        await mkdir(dirname(outputVideoPath), { recursive: true })
+          const fileWriteStream = fs.createWriteStream(outputVideoPath)
 
-        const fileWriteStream = fs.createWriteStream(outputVideoPath)
+          const options: PuppeteerScreenRecorderOptions = {
+            ...commonOptions(),
+            videoCodec: 'libvpx-vp9',
+            outputFormat: 'webm',
+          }
 
-        const options: PuppeteerScreenRecorderOptions = {
-          fps: 20,
-          videoCodec: 'libvpx-vp9',
-          outputFormat: 'webm',
-          autoStopAfterSeconds: 10,
-        }
+          await record(page, options, fileWriteStream)
 
-        await record(page, options, fileWriteStream)
-
-        expect(fs.existsSync(outputVideoPath)).toBeTruthy()
-        fileWriteStream.on('end', () => {
-          expect(fileWriteStream.writableFinished).toBeTruthy()
+          expect(fs.existsSync(outputVideoPath)).toBeTruthy()
+          fileWriteStream.on('end', () => {
+            expect(fileWriteStream.writableFinished).toBeTruthy()
+          })
         })
       })
-    })
+    }
   },
   { retry: 0, timeout: 600_000 }
 )
+
+function commonOptions(): PuppeteerScreenRecorderOptions {
+  return {
+    fps: 20,
+    keyframeIntervalInSeconds: 1,
+    videoFrame: { width: 1920, height: 1080 },
+    autoStopAfterSeconds: 10,
+    minVideoBitrate: 1000,
+    maxVideoBitrate: 1000,
+  }
+}
 
 async function record(
   page: Page,
@@ -124,7 +127,7 @@ async function goToClock(page: Page) {
 }
 
 function outputPath(filename: string) {
-  return `./test-output/${new Date().toISOString()}-${filename}`
+  return `./test-output/${new Date().toISOString().split(':').join('-')}-${filename}`
 }
 
 async function withBrowser(fn: (page: Page) => Promise<void>) {

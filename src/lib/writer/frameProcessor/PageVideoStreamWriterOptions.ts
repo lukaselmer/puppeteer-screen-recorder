@@ -8,7 +8,7 @@ export interface PageVideoStreamWriterOptions {
   readonly outputFormat: OutputFormat
   readonly ffmpegPath: string | undefined
   readonly videoFrame: { width: number; height: number } | undefined
-  readonly aspectRatio: '3:2' | '4:3' | '16:9' | undefined
+  readonly aspectRatio: '3:2' | '4:3' | '16:9'
   readonly videoCodec: string
   readonly minVideoBitrate: number
   readonly maxVideoBitrate: number
@@ -16,6 +16,7 @@ export interface PageVideoStreamWriterOptions {
   readonly videoPreset: string
   readonly videoPixelFormat: string
   readonly autoPad: 'on' | 'off' | { color: string }
+  readonly keyframeIntervalInSeconds: number | undefined
   readonly autoStopAfterSeconds: number | undefined
   readonly logger: Logger
 }

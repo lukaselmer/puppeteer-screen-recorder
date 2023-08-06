@@ -25,6 +25,7 @@ export function toDefinedOptions(
     autoPad = 'off',
     autoStopAfterSeconds,
     logger = console,
+    keyframeIntervalInSeconds,
   } = options
 
   const videoCodec = rawVideoCodec ? rawVideoCodec : outputFormat === 'webm' ? 'libvpx-vp9' : 'libx264'
@@ -60,6 +61,7 @@ export function toDefinedOptions(
     videoPreset,
     videoPixelFormat,
     autoPad: autoPad === 'off' ? 'off' : !autoPad.color ? 'on' : { color: autoPad.color },
+    keyframeIntervalInSeconds,
     autoStopAfterSeconds,
     logger,
   }
@@ -160,6 +162,12 @@ export interface PuppeteerScreenRecorderOptions {
   readonly autoPad?: {
     color?: string
   }
+
+  /**
+   * @description Enforces a keyframe every n seconds. Small values make video more seekable at the cost of compression. `undefined` / 0 means using the default value of the codec.
+   * @default undefined
+   */
+  readonly keyframeIntervalInSeconds?: number
 
   /**
    * @description Specify seconds after which the recording is stopped automatically. If set, it must be at least 1 second. By default video keeps recording until `stop()` is called.

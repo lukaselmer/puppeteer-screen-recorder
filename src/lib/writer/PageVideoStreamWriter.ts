@@ -136,18 +136,21 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
     })
       .videoCodec(videoCodec)
       .size(this.videoFrameSize)
-      .aspect(this.options.aspectRatio || '4:3')
+      .aspect(this.options.aspectRatio)
       .autoPad(this.autoPad.activation, this.autoPad?.color)
       .inputFormat('image2pipe')
       .inputFPS(this.fps)
       .outputOptions(`-crf ${this.options.videoCrf ?? 23}`)
 
+    if (this.options.keyframeIntervalInSeconds)
+      outputStream.outputOptions(`-g ${this.options.keyframeIntervalInSeconds * this.options.fps}`)
+
     if (outputFormat !== 'webm') {
       outputStream
-        .outputOptions(`-preset ${this.options.videoPreset || 'ultrafast'}`)
-        .outputOptions(`-pix_fmt ${this.options.videoPixelFormat || 'yuv420p'}`)
-        .outputOptions(`-minrate ${this.options.minVideoBitrate || 1000}`)
-        .outputOptions(`-maxrate ${this.options.maxVideoBitrate || 1000}`)
+        .outputOptions(`-preset ${this.options.videoPreset}`)
+        .outputOptions(`-pix_fmt ${this.options.videoPixelFormat}`)
+        .outputOptions(`-minrate ${this.options.minVideoBitrate}`)
+        .outputOptions(`-maxrate ${this.options.maxVideoBitrate}`)
         .outputOptions('-framerate 1')
     }
 
@@ -160,7 +163,6 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
         .outputOptions('-tile-columns 4')
         .outputOptions('-frame-parallel 1')
         .outputOptions('-row-mt 1')
-        .outputOptions('-g 20')
     }
 
     outputStream.outputOptions(`-threads ${threads}`).on('progress', (progressDetails) => {
@@ -169,6 +171,7 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
 
     if (this.options.autoStopAfterSeconds) {
       outputStream.duration(this.options.autoStopAfterSeconds)
+      outputStream.setDuration(this.options.autoStopAfterSeconds)
     }
 
     return outputStream
