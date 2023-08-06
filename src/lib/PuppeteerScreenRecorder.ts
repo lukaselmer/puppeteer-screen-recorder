@@ -117,7 +117,7 @@ export class PuppeteerScreenRecorder {
 
     this.streamWriter.once('videoStreamWriterError', async (error) => {
       this.recorderErrors.push(error as Error)
-      this.logger.error('Error from vide stream writer', error)
+      this.logger.error('Error from video stream writer', error)
       await this.gracefulStop()
     })
   }

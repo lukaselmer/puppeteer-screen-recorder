@@ -5,6 +5,7 @@ import puppeteer, { Page } from 'puppeteer'
 import { describe, ExpectStatic, it, TestContext } from 'vitest'
 
 import { PuppeteerScreenRecorder, PuppeteerScreenRecorderOptions } from '..'
+import { inMemoryLogger } from '../lib/writer/frameProcessor/writerTestUtils'
 
 describe.concurrent(
   'ShortPuppeteerScreenRecorder',
@@ -42,7 +43,6 @@ describe.concurrent(
       it(`Changes the frame width, height and aspect ratio to ${outputVideoPath}`, async ({
         expect,
       }) => {
-        /** setup */
         await withBrowser(async (page) => {
           const options: PuppeteerScreenRecorderOptions = {
             followNewTab: false,
@@ -55,10 +55,8 @@ describe.concurrent(
           const recorder = new PuppeteerScreenRecorder(page, options)
           await recorder.statWritingToFile(outputVideoPath)
 
-          /** execute */
           await goToGithub(page)
 
-          /** cleanup */
           await recorder.stop()
 
           assertSuccessfulRecording(expect, recorder, outputVideoPath)
@@ -67,19 +65,15 @@ describe.concurrent(
     }
 
     it('Throws an error with an invalid savePath argument', async ({ expect }) => {
-      /** setup */
       await withBrowser(async (page) => {
         try {
-          const outputVideoPath = outputPath('./tes')
-          const recorder = new PuppeteerScreenRecorder(page)
+          const outputVideoPath = outputPath('tes')
+          const recorder = new PuppeteerScreenRecorder(page, { logger: inMemoryLogger() })
           await recorder.statWritingToFile(outputVideoPath)
-          /** execute */
-          await goToGithubAndGoogle(page)
-
-          /** cleanup */
-          await recorder.stop()
         } catch (error) {
-          expect((error as Error).message).toMatchInlineSnapshot('"File format is not supported"')
+          expect((error as Error).message.trim()).toMatchInlineSnapshot(
+            '"ffmpeg exited with code 1: ./test-output/tes: Invalid argument"'
+          )
         }
       })
     })
@@ -87,7 +81,6 @@ describe.concurrent(
     {
       const outputVideoPath = outputPath('4-streamed.mp4')
       it(`Streams the video to ${outputVideoPath}`, async ({ expect }) => {
-        /** setup */
         await withBrowser(async (page) => {
           try {
             fs.mkdirSync(dirname(outputVideoPath), { recursive: true })
@@ -100,13 +93,10 @@ describe.concurrent(
           const recorder = new PuppeteerScreenRecorder(page)
           await recorder.startWritingToStream(fileWriteStream)
 
-          /** execute */
           await goToGithubAndGoogle(page)
 
-          /** cleanup */
           await recorder.stop()
 
-          /** assert */
           expect(fs.existsSync(outputVideoPath)).toBeTruthy()
           fileWriteStream.on('end', () => {
             expect(fileWriteStream.writableFinished).toBeTruthy()
@@ -118,7 +108,6 @@ describe.concurrent(
     {
       const outputVideoPath = outputPath('5a-gray-autoPad-color.mp4')
       it(`Records with the autoPad color to gray to ${outputVideoPath}`, async ({ expect }) => {
-        /** setup */
         await withBrowser(async (page) => {
           const options: PuppeteerScreenRecorderOptions = {
             followNewTab: false,
@@ -133,13 +122,10 @@ describe.concurrent(
           const recorder = new PuppeteerScreenRecorder(page, options)
           await recorder.statWritingToFile(outputVideoPath)
 
-          /** execute */
           await goToGithub(page)
 
-          /** cleanup */
           await recorder.stop()
 
-          /** assert */
           expect(fs.existsSync(outputVideoPath)).toBeTruthy()
         })
       })
@@ -148,7 +134,6 @@ describe.concurrent(
     {
       const outputVideoPath = outputPath('5b-hex-autoPad-color.mp4')
       it(`Records with the autoPad color #008000 to ${outputVideoPath}`, async ({ expect }) => {
-        /** setup */
         await withBrowser(async (page) => {
           const options: PuppeteerScreenRecorderOptions = {
             followNewTab: false,
@@ -163,10 +148,8 @@ describe.concurrent(
           const recorder = new PuppeteerScreenRecorder(page, options)
           await recorder.statWritingToFile(outputVideoPath)
 
-          /** execute */
           await goToGithub(page)
 
-          /** cleanup */
           await recorder.stop()
 
           assertSuccessfulRecording(expect, recorder, outputVideoPath)
@@ -177,7 +160,6 @@ describe.concurrent(
     {
       const outputVideoPath = outputPath('5b-default-autoPad-color.mp4')
       it(`Records with the default autoPad color to ${outputVideoPath}`, async ({ expect }) => {
-        /** setup */
         await withBrowser(async (page) => {
           const options: PuppeteerScreenRecorderOptions = {
             followNewTab: false,
@@ -190,10 +172,8 @@ describe.concurrent(
           const recorder = new PuppeteerScreenRecorder(page, options)
           await recorder.statWritingToFile(outputVideoPath)
 
-          /** execute */
           await goToGithub(page)
 
-          /** cleanup */
           await recorder.stop()
 
           assertSuccessfulRecording(expect, recorder, outputVideoPath)
@@ -204,7 +184,6 @@ describe.concurrent(
     {
       const outputVideoPath = outputPath('6-custom-crf.mp4')
       it(`Records with a custom crf to ${outputVideoPath}`, async ({ expect }) => {
-        /** setup */
         await withBrowser(async (page) => {
           const options: PuppeteerScreenRecorderOptions = {
             followNewTab: false,
@@ -217,10 +196,8 @@ describe.concurrent(
           const recorder = new PuppeteerScreenRecorder(page, options)
           await recorder.statWritingToFile(outputVideoPath)
 
-          /** execute */
           await goToGithub(page)
 
-          /** cleanup */
           await recorder.stop()
 
           assertSuccessfulRecording(expect, recorder, outputVideoPath)

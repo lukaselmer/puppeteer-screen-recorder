@@ -16,7 +16,7 @@ export function toDefinedOptions(
     ffmpegPath,
     videoFrame,
     aspectRatio = '4:3',
-    videoCodec: rawVideoCodec,
+    videoCodec,
     minVideoBitrate = 1_000,
     maxVideoBitrate = 10_000,
     videoCrf = 23,
@@ -27,8 +27,6 @@ export function toDefinedOptions(
     logger = console,
     keyframeIntervalInSeconds,
   } = options
-
-  const videoCodec = rawVideoCodec ? rawVideoCodec : outputFormat === 'webm' ? 'libvpx-vp9' : 'libx264'
 
   if (fps < 0) throw new Error('fps must be at least 0')
   if (inputFramesToBuffer < 0) throw new Error('inputFramesToBuffer must be at least 0')

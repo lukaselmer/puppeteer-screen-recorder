@@ -106,7 +106,7 @@ class PassThroughWithBuffer extends PassThrough {
   }
 }
 
-function inMemoryLogger(): TestLogger {
+export function inMemoryLogger(): TestLogger {
   const logs: any[] = []
   return {
     log: (...args) => void logs.push(args),

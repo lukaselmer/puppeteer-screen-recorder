@@ -8,7 +8,7 @@ export default defineConfig({
     retry: 3,
     minThreads: 10,
     maxThreads: 20,
-    maxConcurrency: 20,
+    maxConcurrency: 6,
     include: ['src/**/*.spec.ts'],
     globalSetup: 'src/spec/globalSetup.ts',
   },
