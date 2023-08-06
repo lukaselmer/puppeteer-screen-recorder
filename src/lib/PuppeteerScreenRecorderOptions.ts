@@ -1,6 +1,6 @@
 import { PageVideoStreamReaderOptions } from './reader/PageVideoStreamReaderOptions'
 import { OutputFormat } from './writer/OutputFormat'
-import { PageVideoStreamWriterOptions } from './writer/PageVideoStreamWriterOptions'
+import { PageVideoStreamWriterOptions } from './writer/frameProcessor/PageVideoStreamWriterOptions'
 
 export function toDefinedOptions(
   options: PuppeteerScreenRecorderOptions

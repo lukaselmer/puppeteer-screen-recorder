@@ -1,4 +1,4 @@
-import { OutputFormat } from './OutputFormat'
+import { OutputFormat } from '../OutputFormat'
 
 export interface PageVideoStreamWriterOptions {
   readonly fps: number

@@ -5,9 +5,9 @@ import { TypedEmitter } from 'tiny-typed-emitter'
 import { Logger } from '../logger'
 import { PageScreenFrame } from '../PageScreenFrame'
 import { validateVideoCodec } from '../videoCodecs'
-import { BufferedFrameProcessor } from './BufferedFrameProcessor'
+import { BufferedFrameProcessor } from './frameProcessor/BufferedFrameProcessor'
+import { PageVideoStreamWriterOptions } from './frameProcessor/PageVideoStreamWriterOptions'
 import { OutputFormat, outputFormatFor } from './OutputFormat'
-import { PageVideoStreamWriterOptions } from './PageVideoStreamWriterOptions'
 import { VideoWriteStatus } from './VideoWriteStatus'
 
 export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEvents> {

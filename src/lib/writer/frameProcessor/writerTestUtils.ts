@@ -1,6 +1,6 @@
 import { PassThrough } from 'stream'
-import { Logger } from '../logger'
-import { PageScreenFrame } from '../PageScreenFrame'
+import { Logger } from '../../logger'
+import { PageScreenFrame } from '../../PageScreenFrame'
 import { BufferedFrameProcessor } from './BufferedFrameProcessor'
 import { BufferedFrameProcessorOptions } from './BufferedFrameProcessorOptions'
 import { UnbufferedFrameProcessor } from './UnbufferedFrameProcessor'

@@ -1,4 +1,4 @@
-import { PageScreenFrame } from '../PageScreenFrame'
+import { PageScreenFrame } from '../../PageScreenFrame'
 import { UnbufferedFrameProcessorOptions } from './UnbufferedFrameProcessorOptions'
 
 export class UnbufferedFrameProcessor {

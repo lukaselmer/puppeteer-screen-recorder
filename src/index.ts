@@ -16,15 +16,16 @@ export {
 } from './lib/reader/PageVideoStreamReader'
 export { PageVideoStreamReaderOptions } from './lib/reader/PageVideoStreamReaderOptions'
 
-export { BufferedFrameProcessor } from './lib/writer/BufferedFrameProcessor'
-export { BufferedFrameProcessorOptions } from './lib/writer/BufferedFrameProcessorOptions'
 export { OutputFormat, outputFormatFor, outputFormats } from './lib/writer/OutputFormat'
 export { PageVideoStreamWriter, PageVideoStreamWriterEvents } from './lib/writer/PageVideoStreamWriter'
-export { PageVideoStreamWriterOptions } from './lib/writer/PageVideoStreamWriterOptions'
-export { SortedQueue } from './lib/writer/SortedQueue'
+export { VideoWriteStatus } from './lib/writer/VideoWriteStatus'
+
+export { BufferedFrameProcessor } from './lib/writer/frameProcessor/BufferedFrameProcessor'
+export { BufferedFrameProcessorOptions } from './lib/writer/frameProcessor/BufferedFrameProcessorOptions'
+export { PageVideoStreamWriterOptions } from './lib/writer/frameProcessor/PageVideoStreamWriterOptions'
+export { SortedQueue } from './lib/writer/frameProcessor/SortedQueue'
 export {
   UnbufferedFrameProcessor,
   frameIsOutOfOrderErrorMessage,
-} from './lib/writer/UnbufferedFrameProcessor'
-export { UnbufferedFrameProcessorOptions } from './lib/writer/UnbufferedFrameProcessorOptions'
-export { VideoWriteStatus } from './lib/writer/VideoWriteStatus'
+} from './lib/writer/frameProcessor/UnbufferedFrameProcessor'
+export { UnbufferedFrameProcessorOptions } from './lib/writer/frameProcessor/UnbufferedFrameProcessorOptions'

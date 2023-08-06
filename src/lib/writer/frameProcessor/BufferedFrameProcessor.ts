@@ -1,5 +1,5 @@
-import { Logger } from '../logger'
-import { PageScreenFrame } from '../PageScreenFrame'
+import { Logger } from '../../logger'
+import { PageScreenFrame } from '../../PageScreenFrame'
 import { BufferedFrameProcessorOptions } from './BufferedFrameProcessorOptions'
 import { SortedQueue } from './SortedQueue'
 import { frameIsOutOfOrderErrorMessage, UnbufferedFrameProcessor } from './UnbufferedFrameProcessor'
