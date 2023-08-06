@@ -1,5 +1,5 @@
 export class SortedQueue<T> {
-  private sortedByMinimumFirst: T[] = []
+  private readonly sortedByMinimumFirst: T[] = []
 
   constructor(private sortBy: (el: T) => number) {}
 

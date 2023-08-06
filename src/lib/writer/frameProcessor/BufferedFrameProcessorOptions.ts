@@ -1,4 +1,4 @@
 export interface BufferedFrameProcessorOptions {
-  fps: number
-  inputFramesToBuffer: number
+  readonly fps: number
+  readonly inputFramesToBuffer: number
 }

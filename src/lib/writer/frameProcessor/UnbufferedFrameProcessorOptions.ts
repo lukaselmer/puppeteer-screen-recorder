@@ -1,3 +1,3 @@
 export interface UnbufferedFrameProcessorOptions {
-  fps: number
+  readonly fps: number
 }

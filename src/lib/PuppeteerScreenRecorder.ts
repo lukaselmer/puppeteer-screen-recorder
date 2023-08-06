@@ -28,11 +28,11 @@ import { PageVideoStreamWriter } from './writer/PageVideoStreamWriter'
  * ```
  */
 export class PuppeteerScreenRecorder {
-  private options: DefinedPuppeteerScreenRecorderOptions
-  private streamReader: PageVideoStreamReader
-  private streamWriter!: PageVideoStreamWriter
+  private readonly options: DefinedPuppeteerScreenRecorderOptions
+  private readonly streamReader: PageVideoStreamReader
+  private streamWriter: PageVideoStreamWriter | undefined
   private stopRecordingPromise: Promise<void> | undefined
-  recorderErrors: Error[] = []
+  readonly recorderErrors: Error[] = []
 
   constructor(
     private page: Page,
@@ -65,6 +65,8 @@ export class PuppeteerScreenRecorder {
   async statWritingToFile(savePath: string): Promise<void> {
     await this.ensureDirectoryExist(dirname(savePath))
 
+    if (this.stopped) throw new Error('Invalid state: recording has already been stopped')
+
     this.streamWriter = new PageVideoStreamWriter(this.logger, savePath, this.options.outputOptions)
     await this.streamWriter.startStreamWriter()
     await this.startStreamReader()
@@ -83,6 +85,8 @@ export class PuppeteerScreenRecorder {
    * ```
    */
   async startWritingToStream(stream: Writable): Promise<void> {
+    if (this.stopped) throw new Error('Invalid state: recording has already been stopped')
+
     this.streamWriter = new PageVideoStreamWriter(this.logger, stream, this.options.outputOptions)
     await this.streamWriter.startStreamWriter()
     await this.startStreamReader()
@@ -97,10 +101,13 @@ export class PuppeteerScreenRecorder {
   }
 
   private setupListeners(): void {
+    if (!this.streamWriter) throw new Error('Invalid state: streamWriter is undefined')
+
     this.page.once('close', () => this.gracefulStop())
 
-    this.streamReader.on('pageScreenFrame', (pageScreenFrame) =>
-      this.streamWriter.gracefulInsert(pageScreenFrame)
+    this.streamReader.on(
+      'pageScreenFrame',
+      (pageScreenFrame) => this.streamWriter?.gracefulInsert(pageScreenFrame)
     )
 
     this.streamWriter.once('videoStreamWriterError', async (error) => {
@@ -129,7 +136,11 @@ export class PuppeteerScreenRecorder {
   }
 
   private async stopInternal(): Promise<void> {
-    await this.streamWriter.stop()
+    await this.streamWriter?.stop()
     await this.streamReader.stop()
+  }
+
+  private get stopped() {
+    return !!this.stopRecordingPromise
   }
 }

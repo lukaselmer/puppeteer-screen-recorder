@@ -11,20 +11,19 @@ import { OutputFormat, outputFormatFor } from './OutputFormat'
 import { VideoWriteStatus } from './VideoWriteStatus'
 
 export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEvents> {
-  // private readonly screenLimit = 10
-  // private screenCastFrames: PageScreenFrame[] = []
   duration = '00:00:00:00'
 
   private status: VideoWriteStatus = 'notStarted'
 
-  private videoMediatorStream: PassThrough = new PassThrough()
+  private readonly videoMediatorStream: PassThrough = new PassThrough()
+  private readonly frameProcessor: BufferedFrameProcessor
+
   private writerPromise: Promise<void> | undefined
-  private frameProcessor: BufferedFrameProcessor
 
   constructor(
-    private logger: Logger,
-    private destination: string | Writable,
-    private options: PageVideoStreamWriterOptions
+    private readonly logger: Logger,
+    private readonly destination: string | Writable,
+    private readonly options: PageVideoStreamWriterOptions
   ) {
     super()
     this.frameProcessor = new BufferedFrameProcessor(logger, options, this.videoMediatorStream)
@@ -200,36 +199,7 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
   private insert(frame: PageScreenFrame): void {
     if (this.status === 'stopping' || this.status === 'completed') return
     this.frameProcessor.processFrame(frame)
-    // if (this.frameProcessor.shouldWriteFrame()) {
-    //   if (this.videoMediatorStream.writable) this.videoMediatorStream.write(frame.blob)
-    // }
-
-    // reduce the queue into half when it is full
-    // if (this.screenCastFrames.length === this.screenLimit) {
-    //   const numberOfFramesToSplice = Math.floor(this.screenLimit / 2)
-    //   const framesToProcess = this.screenCastFrames.splice(0, numberOfFramesToSplice)
-    //   this.processFrameBeforeWrite(framesToProcess, this.screenCastFrames[0].timestamp)
-    // }
-
-    // const insertionIndex = this.findSlot(frame.timestamp)
-
-    // if (insertionIndex === this.screenCastFrames.length) {
-    // this.screenCastFrames.push(frame)
-    // } else {
-    //   this.screenCastFrames.splice(insertionIndex, 0, frame)
-    // }
   }
-
-  // private findSlot(timestamp: number): number {
-  //   if (this.screenCastFrames.length === 0) return 0
-  //   let i: number
-  //   let frame: PageScreenFrame
-  //   for (i = this.screenCastFrames.length - 1; i >= 0; i--) {
-  //     frame = this.screenCastFrames[i]
-  //     if (timestamp > frame.timestamp) break
-  //   }
-  //   return i + 1
-  // }
 
   private async gracefulStop() {
     try {
@@ -239,14 +209,13 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
     }
   }
 
-  async stop(/*stoppedTime = Date.now() / 1000*/): Promise<void> {
+  async stop(): Promise<void> {
     if (!this.writerPromise)
       throw new Error('Writer promise not initialized: did startStreamWriter() throw?')
 
     if (this.status === 'completed' || this.status === 'stopping') return this.writerPromise
 
     this.status = 'stopping'
-    // this.drainFrames(stoppedTime)
     this.frameProcessor.drainFrames()
 
     this.videoMediatorStream.end()
@@ -254,36 +223,6 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
 
     await this.writerPromise
   }
-
-  // private drainFrames(stoppedTime: number): void {
-  //   this.processFrameBeforeWrite(this.screenCastFrames, stoppedTime)
-  //   this.screenCastFrames = []
-  // }
-
-  // private processFrameBeforeWrite(frames: PageScreenFrame[], chunkEndTime: number): void {
-  //   const processedFrames = this.trimFrame(frames, chunkEndTime)
-
-  //   processedFrames.forEach(({ blob, duration }) => this.write(blob, duration))
-  // }
-
-  // private trimFrame(fameList: PageScreenFrame[], chunkEndTime: number): PageScreenFrame[] {
-  //   return fameList.map((currentFrame: PageScreenFrame, index: number) => {
-  //     const endTime = index !== fameList.length - 1 ? fameList[index + 1].timestamp : chunkEndTime
-  //     const duration = endTime - currentFrame.timestamp
-
-  //     return { ...currentFrame, duration }
-  //   })
-  // }
-
-  // private write(data: Buffer, durationSeconds = 1): void {
-  //   if (this.status === 'notStarted') this.status = 'inProgress'
-
-  //   const numberOfFps = Math.max(Math.floor(durationSeconds * this.fps), 1)
-
-  //   for (let i = 0; i < numberOfFps; i++) {
-  //     if (this.videoMediatorStream.writable) this.videoMediatorStream.write(data)
-  //   }
-  // }
 
   private async configureFfmpegPath(): Promise<void> {
     const ffmpegPath = await this.getFfmpegPath()

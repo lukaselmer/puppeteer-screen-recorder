@@ -10,8 +10,8 @@ export class BufferedFrameProcessor {
 
   constructor(
     private readonly logger: Logger,
-    private options: BufferedFrameProcessorOptions,
-    outputStream: NodeJS.WritableStream
+    private readonly options: BufferedFrameProcessorOptions,
+    readonly outputStream: NodeJS.WritableStream
   ) {
     this.unbufferedFrameProcessor = new UnbufferedFrameProcessor(options, outputStream)
   }
