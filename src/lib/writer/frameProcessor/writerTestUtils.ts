@@ -70,8 +70,7 @@ export function createBufferedFrameProcessor(options: Partial<BufferedFrameProce
   const stream = new PassThroughWithBuffer({ encoding: 'utf-8' })
   const logger = inMemoryLogger()
   const processor = new BufferedFrameProcessor(
-    logger,
-    { inputFramesToBuffer: 100, fps: 1, ...options },
+    { inputFramesToBuffer: 100, fps: 1, logger, ...options },
     stream
   )
   return { processor, stream, logger }

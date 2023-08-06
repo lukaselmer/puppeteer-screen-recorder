@@ -2,7 +2,6 @@ import os from 'os'
 import { PassThrough, Writable } from 'stream'
 import ffmpeg, { FfmpegCommand, setFfmpegPath } from 'fluent-ffmpeg'
 import { TypedEmitter } from 'tiny-typed-emitter'
-import { Logger } from '../logger'
 import { PageScreenFrame } from '../PageScreenFrame'
 import { validateVideoCodec } from '../videoCodecs'
 import { BufferedFrameProcessor } from './frameProcessor/BufferedFrameProcessor'
@@ -21,12 +20,11 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
   private writerPromise: Promise<void> | undefined
 
   constructor(
-    private readonly logger: Logger,
     private readonly destination: string | Writable,
     private readonly options: PageVideoStreamWriterOptions
   ) {
     super()
-    this.frameProcessor = new BufferedFrameProcessor(logger, options, this.videoMediatorStream)
+    this.frameProcessor = new BufferedFrameProcessor(options, this.videoMediatorStream)
   }
 
   async startStreamWriter(): Promise<void> {
@@ -266,6 +264,10 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
       : autoPad === 'on'
       ? { activation: true }
       : { activation: true, color: autoPad.color }
+  }
+
+  private get logger() {
+    return this.options.logger
   }
 }
 

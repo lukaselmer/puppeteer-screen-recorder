@@ -1,6 +1,7 @@
+import { Logger } from './logger'
 import { PageVideoStreamReaderOptions } from './reader/PageVideoStreamReaderOptions'
-import { OutputFormat } from './writer/OutputFormat'
 import { PageVideoStreamWriterOptions } from './writer/frameProcessor/PageVideoStreamWriterOptions'
+import { OutputFormat } from './writer/OutputFormat'
 
 export function toDefinedOptions(
   options: PuppeteerScreenRecorderOptions
@@ -23,6 +24,7 @@ export function toDefinedOptions(
     videoPixelFormat = 'yuv420p',
     autoPad = 'off',
     autoStopAfterSeconds,
+    logger = console,
   } = options
 
   const videoCodec = rawVideoCodec ? rawVideoCodec : outputFormat === 'webm' ? 'libvpx-vp9' : 'libx264'
@@ -41,6 +43,7 @@ export function toDefinedOptions(
     followNewTab,
     inputQuality,
     inputFormat,
+    logger,
   }
   const outputOptions: PageVideoStreamWriterOptions = {
     fps,
@@ -58,8 +61,9 @@ export function toDefinedOptions(
     videoPixelFormat,
     autoPad: autoPad === 'off' ? 'off' : !autoPad.color ? 'on' : { color: autoPad.color },
     autoStopAfterSeconds,
+    logger,
   }
-  return { inputOptions, outputOptions }
+  return { inputOptions, outputOptions, logger }
 }
 
 export interface PuppeteerScreenRecorderOptions {
@@ -168,9 +172,16 @@ export interface PuppeteerScreenRecorderOptions {
    * @default 100
    */
   readonly inputFramesToBuffer?: number
+
+  /**
+   * @description Specify the logger to use.
+   * @default console
+   */
+  readonly logger?: Logger
 }
 
 export interface DefinedPuppeteerScreenRecorderOptions {
+  readonly logger: Logger
   readonly inputOptions: PageVideoStreamReaderOptions
   readonly outputOptions: PageVideoStreamWriterOptions
 }

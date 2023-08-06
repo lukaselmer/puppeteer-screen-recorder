@@ -6,7 +6,6 @@ import { PageVideoStreamReaderOptions } from './PageVideoStreamReaderOptions'
 
 export class PageVideoStreamReader extends TypedEmitter<PageVideoStreamReaderEvents> {
   private page: Page
-  private options: PageVideoStreamReaderOptions
   private sessionsStack: CDPSession[] = []
   private streamingEnded = false
   private onTabOpenListener: (page: Page) => void
@@ -14,13 +13,11 @@ export class PageVideoStreamReader extends TypedEmitter<PageVideoStreamReaderEve
   private frameAckReceived: Promise<void> | undefined
 
   constructor(
-    private logger: Logger,
     page: Page,
-    options: PageVideoStreamReaderOptions
+    private options: PageVideoStreamReaderOptions
   ) {
     super()
     this.page = page
-    this.options = options
     this.onTabOpenListener = (newPage) => this.onTabOpen(newPage)
   }
 
@@ -132,6 +129,10 @@ export class PageVideoStreamReader extends TypedEmitter<PageVideoStreamReaderEve
 
   private getCurrentSession(): CDPSession | undefined {
     return this.sessionsStack.at(-1)
+  }
+
+  private get logger() {
+    return this.options.logger
   }
 }
 

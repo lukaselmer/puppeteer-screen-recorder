@@ -1,4 +1,3 @@
-import { Logger } from '../../logger'
 import { PageScreenFrame } from '../../PageScreenFrame'
 import { BufferedFrameProcessorOptions } from './BufferedFrameProcessorOptions'
 import { SortedQueue } from './SortedQueue'
@@ -9,7 +8,6 @@ export class BufferedFrameProcessor {
   private readonly unbufferedFrameProcessor: UnbufferedFrameProcessor
 
   constructor(
-    private readonly logger: Logger,
     private readonly options: BufferedFrameProcessorOptions,
     readonly outputStream: NodeJS.WritableStream
   ) {
@@ -41,7 +39,7 @@ export class BufferedFrameProcessor {
       this.unbufferedFrameProcessor.processFrame(frameToProcess)
     } catch (error) {
       if (error instanceof Error && error.message === frameIsOutOfOrderErrorMessage)
-        this.logger.warn('Frame is out of order, skipping frame')
+        this.options.logger.warn('Frame is out of order, skipping frame')
       else throw error
     }
   }

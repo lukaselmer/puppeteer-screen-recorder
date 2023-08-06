@@ -1,3 +1,4 @@
+import { Logger } from '../../logger'
 import { OutputFormat } from '../OutputFormat'
 
 export interface PageVideoStreamWriterOptions {
@@ -16,4 +17,5 @@ export interface PageVideoStreamWriterOptions {
   readonly videoPixelFormat: string
   readonly autoPad: 'on' | 'off' | { color: string }
   readonly autoStopAfterSeconds: number | undefined
+  readonly logger: Logger
 }

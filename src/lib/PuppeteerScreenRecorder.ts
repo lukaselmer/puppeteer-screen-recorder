@@ -2,7 +2,6 @@ import { mkdir } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { Writable } from 'node:stream'
 import { Page } from 'puppeteer'
-import { Logger } from './logger'
 import {
   DefinedPuppeteerScreenRecorderOptions,
   PuppeteerScreenRecorderOptions,
@@ -36,11 +35,10 @@ export class PuppeteerScreenRecorder {
 
   constructor(
     private page: Page,
-    options: PuppeteerScreenRecorderOptions = {},
-    private logger: Logger = console
+    options: PuppeteerScreenRecorderOptions = {}
   ) {
     this.options = toDefinedOptions(options)
-    this.streamReader = new PageVideoStreamReader(logger, page, this.options.inputOptions)
+    this.streamReader = new PageVideoStreamReader(page, this.options.inputOptions)
   }
 
   /**
@@ -67,7 +65,7 @@ export class PuppeteerScreenRecorder {
 
     if (this.stopped) throw new Error('Invalid state: recording has already been stopped')
 
-    this.streamWriter = new PageVideoStreamWriter(this.logger, savePath, this.options.outputOptions)
+    this.streamWriter = new PageVideoStreamWriter(savePath, this.options.outputOptions)
     await this.streamWriter.startStreamWriter()
     await this.startStreamReader()
   }
@@ -87,7 +85,7 @@ export class PuppeteerScreenRecorder {
   async startWritingToStream(stream: Writable): Promise<void> {
     if (this.stopped) throw new Error('Invalid state: recording has already been stopped')
 
-    this.streamWriter = new PageVideoStreamWriter(this.logger, stream, this.options.outputOptions)
+    this.streamWriter = new PageVideoStreamWriter(stream, this.options.outputOptions)
     await this.streamWriter.startStreamWriter()
     await this.startStreamReader()
   }
@@ -142,5 +140,9 @@ export class PuppeteerScreenRecorder {
 
   private get stopped() {
     return !!this.stopRecordingPromise
+  }
+
+  private get logger() {
+    return this.options.logger
   }
 }
