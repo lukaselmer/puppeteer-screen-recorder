@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file. See
 [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.0.0](https://github.com/lukaselmer/puppeteer-screen-recorder/compare/v2.1.2...v3.0.0) (2023-08-06)
+
 ### [2.1.2](https://github.com/prasanaworld/puppeteer-screen-recorder/compare/v2.1.1...v2.1.2) (2022-10-05)
 
 ### [2.1.1](https://github.com/prasanaworld/puppeteer-screen-recorder/compare/v2.1.0...v2.1.1) (2022-09-17)

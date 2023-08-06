@@ -1,27 +1,21 @@
-# <img alt="puppeteer screen recorder logo" width="128px" src="https://github.com/prasanaworld/puppeteer-screen-recorder/blob/main/asserts/puppeteer-screen-recorder.png" /> puppeteer-screen-recorder
+# <img alt="puppeteer screen recorder logo" width="128px" src="https://github.com/lukaselmer/puppeteer-screen-recorder/blob/main/asserts/puppeteer-screen-recorder.png" /> puppeteer-screen-recorder
 
 A puppeteer Plugin that uses the native
 [chrome devtool protocol](https://chromedevtools.github.io/devtools-protocol/tot/Page/#method-startScreencast)
 for capturing video frame by frame. Also supports an option to follow pages that are opened by the
 current page object.
-[Check out API Docs](https://prasanaworld.github.io/puppeteer-screen-recorder/classes/puppeteerscreenrecorder.html).
+[Check out API Docs](https://lukaselmer.github.io/puppeteer-screen-recorder/classes/puppeteerscreenrecorder.html).
 
 [![NPM](https://nodei.co/npm/puppeteer-screen-recorder.png)](https://npmjs.org/package/puppeteer-screen-recorder)
 
-![GitHub](https://img.shields.io/github/license/prasanaworld/puppeteer-screen-recorder)
-[![Build Status](https://travis-ci.org/prasanaworld/puppeteer-screen-recorder.svg?branch=main)](https://travis-ci.org/prasanaworld/puppeteer-screen-recorder)
+![GitHub](https://img.shields.io/github/license/lukaselmer/puppeteer-screen-recorder)
 
-![GitHub package.json version](https://img.shields.io/github/package-json/v/prasanaworld/puppeteer-screen-recorder)
-![GitHub top language](https://img.shields.io/github/languages/top/prasanaworld/puppeteer-screen-recorder)
+![GitHub package.json version](https://img.shields.io/github/package-json/v/lukaselmer/puppeteer-screen-recorder)
+![GitHub top language](https://img.shields.io/github/languages/top/lukaselmer/puppeteer-screen-recorder)
 ![npm](https://img.shields.io/npm/dt/puppeteer-screen-recorder)
-![Snyk Vulnerabilities for npm package](https://img.shields.io/snyk/vulnerabilities/npm/puppeteer-screen-recorder)
+![Snyk Vulnerabilities for npm package](https://img.shields.io/snyk/vulnerabilities/npm/puppeteer-screen-recorder-improved)
 
-![GitHub forks](https://img.shields.io/github/forks/prasanaworld/puppeteer-screen-recorder?style=social)
-![GitHub Repo stars](https://img.shields.io/github/stars/prasanaworld/puppeteer-screen-recorder?style=social)
-![GitHub watchers](https://img.shields.io/github/watchers/prasanaworld/puppeteer-screen-recorder?style=social)
-![Twitter Follow](https://img.shields.io/twitter/follow/prasanaworld?style=social)
-
-<a href="https://github.com/prasanaworld/puppeteer-screen-recorder/issues/new">Add Feature Request</a>
+<a href="https://github.com/lukaselmer/puppeteer-screen-recorder/issues/new">Add Feature Request</a>
 
 </p>
 
@@ -42,9 +36,7 @@ By helping your company become a Github Sponsor, you will not only feel great ab
 open source tools that run your business run, If you believe your company could become a sponsor, then
 please reach out!
 
-- [open-collective](https://opencollective.com/puppeteer-screen-recorder)
-- [Paypal](https://paypal.me/prasanaworld)
-- [Bitcoin - 3NdGW6wKVFgxa1X5XxRDNHqMWAhGNSrA5A](3NdGW6wKVFgxa1X5XxRDNHqMWAhGNSrA5A)
+- See https://github.com/prasanaworld/puppeteer-screen-recorder/
 
 ## Key Feature
 

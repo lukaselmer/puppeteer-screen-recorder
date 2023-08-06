@@ -7,7 +7,7 @@ import { PuppeteerScreenRecorder } from '../lib/PuppeteerScreenRecorder'
 
 /** @ignore */
 async function testStartMethod(format: string, isStream: boolean) {
-  const executablePath = process.env['PUPPETEER_EXECUTABLE_PATH']
+  const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH
   const browser = await puppeteer.launch({
     ...(executablePath ? { executablePath } : {}),
     headless: false,
@@ -33,14 +33,16 @@ async function sleep(ms: number) {
   await new Promise((r) => setTimeout(r, ms))
 }
 
-async function executeSample(format) {
+async function executeSample(format: string) {
   const argList = process.argv.slice(2)
   const isStreamTest = argList.includes('stream')
 
   console.log(`Testing with Method using ${isStreamTest ? 'stream' : 'normal'} mode`)
-  return testStartMethod(format, isStreamTest)
+  await testStartMethod(format, isStreamTest)
 }
 
-executeSample('./report/video/simple1.mp4').then(() => {
-  console.log('completed')
-})
+executeSample('./report/video/simple1.mp4')
+  .then(() => {
+    console.log('completed')
+  })
+  .catch(console.error)
