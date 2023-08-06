@@ -8,6 +8,7 @@ export function toDefinedOptions(
   const {
     followNewTab = true,
     fps = 15,
+    inputFramesToBuffer = 100,
     inputQuality = 100,
     inputFormat = 'jpeg',
     outputFormat,
@@ -27,6 +28,7 @@ export function toDefinedOptions(
   const videoCodec = rawVideoCodec ? rawVideoCodec : outputFormat === 'webm' ? 'libvpx-vp9' : 'libx264'
 
   if (fps < 0) throw new Error('fps must be at least 0')
+  if (inputFramesToBuffer < 0) throw new Error('inputFramesToBuffer must be at least 0')
   if (inputQuality < 0 || inputQuality > 100) throw new Error('quality must be between 0 and 100')
   if (videoCrf < 0) throw new Error('videoCrf must be at least 0')
   if (minVideoBitrate < 0) throw new Error('minVideoBitrate must be at least 0')
@@ -42,6 +44,7 @@ export function toDefinedOptions(
   }
   const outputOptions: PageVideoStreamWriterOptions = {
     fps,
+    inputFramesToBuffer,
     outputFormat: outputFormat ?? 'mp4',
     outputFormatProvided: !!outputFormat,
     ffmpegPath,
@@ -159,6 +162,12 @@ export interface PuppeteerScreenRecorderOptions {
    * @default undefined
    */
   readonly autoStopAfterSeconds?: number
+
+  /**
+   * @description Specify number of frames to buffer. Useful if the screencast frames are received out of order: https://chromedevtools.github.io/devtools-protocol/tot/Page/#event-screencastFrame
+   * @default 100
+   */
+  readonly inputFramesToBuffer?: number
 }
 
 export interface DefinedPuppeteerScreenRecorderOptions {

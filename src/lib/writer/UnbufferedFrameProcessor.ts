@@ -6,8 +6,8 @@ export class UnbufferedFrameProcessor {
   private frameDuration: number
 
   constructor(
-    private options: UnbufferedFrameProcessorOptions,
-    private outputStream: NodeJS.WritableStream
+    private readonly options: UnbufferedFrameProcessorOptions,
+    private readonly outputStream: NodeJS.WritableStream
   ) {
     this.frameDuration = 1 / this.options.fps
   }

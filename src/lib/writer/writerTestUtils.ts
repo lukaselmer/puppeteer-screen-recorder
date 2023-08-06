@@ -35,15 +35,16 @@ function generateFrames(fromSecond: number, upToSecond: number, fps: number): Pa
 }
 
 export function processFrames(
-  processor: { processFrame(frame: PageScreenFrame): void },
+  processor: BufferedFrameProcessor | UnbufferedFrameProcessor,
   frames: PageScreenFrame[]
 ) {
   frames.forEach((f) => processor.processFrame(f))
+  if ('drainFrames' in processor) processor.drainFrames()
 }
 
 export function createBufferedFrameProcessor({ fps }: { fps: number }) {
   const stream = new PassThroughWithBuffer({ encoding: 'utf-8' })
-  const processor = new BufferedFrameProcessor({ fps }, stream)
+  const processor = new BufferedFrameProcessor({ fps, inputFramesToBuffer: 100 }, stream)
   return { processor, stream }
 }
 

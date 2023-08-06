@@ -2,6 +2,7 @@ import { OutputFormat } from './OutputFormat'
 
 export interface PageVideoStreamWriterOptions {
   readonly fps: number
+  readonly inputFramesToBuffer: number
   readonly outputFormatProvided: boolean
   readonly outputFormat: OutputFormat
   readonly ffmpegPath: string | undefined
