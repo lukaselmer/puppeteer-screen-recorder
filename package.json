@@ -49,6 +49,7 @@
     "example": "ts-node src/example/index.ts",
     "example:stream": "npm run example -- stream",
     "example:debug": "npm run example -- --inspect",
+    "release": "rm -rf build && yarn build && npm publish --access=public",
     "build": "run-p build:*",
     "build:main": "tsc -p tsconfig.json",
     "build:module": "tsc -p tsconfig.module.json",
