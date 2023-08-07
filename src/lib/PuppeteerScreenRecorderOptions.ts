@@ -24,7 +24,7 @@ export function toDefinedOptions(
     videoPixelFormat = 'yuv420p',
     autoPad = 'off',
     autoStopAfterSeconds,
-    logger = console,
+    logger: providedLogger,
     keyframeIntervalInSeconds,
     metadata = {},
     twoPassEncoding,
@@ -45,6 +45,8 @@ export function toDefinedOptions(
     if (!twoPassEncoding[0] || !twoPassEncoding[1])
       throw new Error('twoPassEncoding must be two valid paths')
   }
+
+  const logger = providedLogger ?? nullObjectLogger()
 
   const inputOptions: PageVideoStreamReaderOptions = {
     followNewTab,
@@ -73,6 +75,10 @@ export function toDefinedOptions(
     metadata,
   }
   return { inputOptions, outputOptions, logger, twoPassEncoding }
+}
+
+function nullObjectLogger(): Logger {
+  return { debug() {}, error() {}, info() {}, warn() {} }
 }
 
 export interface PuppeteerScreenRecorderOptions {

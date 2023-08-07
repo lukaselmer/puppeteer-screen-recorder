@@ -104,6 +104,7 @@ export class PuppeteerScreenRecorder {
   }
 
   private async startWritingFirstPassToFile(savePath: string) {
+    this.logger.info('Starting writing first pass', savePath)
     if (this.stoppingOrStopped) throw new Error('Invalid state: recording has already been stopped')
 
     this.streamWriter = new PageVideoStreamWriter(savePath, this.options.outputOptions)
@@ -177,9 +178,11 @@ export class PuppeteerScreenRecorder {
   }
 
   private async stopInternal(): Promise<void> {
+    this.logger.info('Stopping recorder')
     await this.streamWriter?.stop()
     await this.streamReader.stop()
     await this.runSecondPassIfRequired()
+    this.logger.info('Recorder stopped')
   }
 
   private async runSecondPassIfRequired() {
@@ -188,18 +191,22 @@ export class PuppeteerScreenRecorder {
     if (!this.destination) throw new Error('Invalid state: destination is undefined')
 
     if (this.destination.type === 'file') {
+      this.logger.info('Starting writing second pass', this.destination.path)
       await encodeWithSecondPass({
         source: this.options.twoPassEncoding[0],
         output: this.destination.path,
       })
       await rm(this.options.twoPassEncoding[0])
     } else if (this.destination.type === 'stream') {
+      this.logger.info('Starting writing second pass', this.options.twoPassEncoding[1])
       await encodeWithSecondPass({
         source: this.options.twoPassEncoding[0],
         output: this.options.twoPassEncoding[1],
       })
-      await this.streamTemporaryFileToStream(this.options.twoPassEncoding[1], this.destination.stream)
       await rm(this.options.twoPassEncoding[0])
+
+      this.logger.info('Start streaming to final destination')
+      await this.streamTemporaryFileToStream(this.options.twoPassEncoding[1], this.destination.stream)
       await rm(this.options.twoPassEncoding[1])
     }
   }

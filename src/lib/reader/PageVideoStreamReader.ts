@@ -140,7 +140,7 @@ async function createCDPSession(logger: Logger, page: Page): Promise<CDPSession 
   try {
     return await page.target().createCDPSession()
   } catch (error) {
-    logger.log('Failed to create CDP Session', error)
+    logger.warn('Failed to create CDP Session', error)
     return null
   }
 }
