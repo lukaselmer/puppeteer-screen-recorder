@@ -60,7 +60,7 @@ function commonOptions(): PuppeteerScreenRecorderOptions {
       description: 'example description',
       year: '2023',
     },
-    twoPassViaFilePath: outputPath('temporary.mp4'),
+    twoPassEncoding: [outputPath('temporary-first.mp4'), outputPath('temporary-second.mp4')],
   }
 }
 

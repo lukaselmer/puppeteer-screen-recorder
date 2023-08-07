@@ -51,7 +51,7 @@
     "import/prefer-default-export": "off",
     "no-nested-ternary": "off",
     "@getify/proper-ternary/nested": ["error", { "else": true, "depth": 10 }],
-    "no-restricted-imports": ["error", { "patterns": ["__test__/*", "__mocks__/*"] }]
-    // "no-console": "warn"
+    "no-restricted-imports": ["error", { "patterns": ["__test__/*", "__mocks__/*"] }],
+    "no-console": "warn"
   }
 }

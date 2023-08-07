@@ -1,7 +1,7 @@
 import { createReadStream } from 'node:fs'
 import { mkdir, rm } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import { PassThrough, Writable } from 'node:stream'
+import { Writable } from 'node:stream'
 import ffmpeg from 'fluent-ffmpeg'
 import { Page } from 'puppeteer'
 import {
@@ -34,6 +34,7 @@ export class PuppeteerScreenRecorder {
   private streamWriter: PageVideoStreamWriter | undefined
   private stopRecordingPromise: Promise<void> | undefined
   readonly recorderErrors: Error[] = []
+  private destination: { type: 'file'; path: string } | { type: 'stream'; stream: Writable } | undefined
 
   constructor(
     private page: Page,
@@ -54,6 +55,35 @@ export class PuppeteerScreenRecorder {
   }
 
   /**
+   * @description Start the video capturing session in a stream
+   * @example
+   * ```
+   *  const stream = new PassThrough();
+   *  await recorder.startWritingToStream(stream);
+   * ```
+   */
+  async startWritingToStream(stream: Writable): Promise<void> {
+    this.destination = { type: 'stream', stream }
+
+    if (this.options.twoPassEncoding) {
+      await this.ensureDirectoryExist(dirname(this.options.twoPassEncoding[0]))
+      await this.ensureDirectoryExist(dirname(this.options.twoPassEncoding[1]))
+      await this.startWritingFirstPassToFile(this.options.twoPassEncoding[0])
+    } else {
+      await this.startWritingToStreamDirectly(stream)
+    }
+  }
+
+  private async startWritingToStreamDirectly(stream: Writable) {
+    if (this.stoppingOrStopped) throw new Error('Invalid state: recording has already been stopped')
+
+    this.streamWriter = new PageVideoStreamWriter(stream, this.options.outputOptions)
+    await this.streamWriter.startStreamWriter()
+    this.setupAutoStop()
+    await this.startStreamReader()
+  }
+
+  /**
    * @param savePath accepts a path string to store the video
    * @description Start the video capturing session
    * @example
@@ -62,11 +92,18 @@ export class PuppeteerScreenRecorder {
    *  await recorder.statWritingToFile(savePath)
    * ```
    */
-  async startWritingToFile(savePath: string): Promise<void> {
-    await this.ensureDirectoryExist(dirname(savePath))
+  async startWritingToFile(finalSavePath: string): Promise<void> {
+    this.destination = { type: 'file', path: finalSavePath }
 
-    if (this.options.twoPassViaFilePath) return this.encodeSecondPassToFile(savePath)
+    await this.ensureDirectoryExist(dirname(finalSavePath))
+    if (this.options.twoPassEncoding)
+      await this.ensureDirectoryExist(dirname(this.options.twoPassEncoding[0]))
 
+    const savePath = this.options.twoPassEncoding ? this.options.twoPassEncoding[0] : finalSavePath
+    await this.startWritingFirstPassToFile(savePath)
+  }
+
+  private async startWritingFirstPassToFile(savePath: string) {
     if (this.stoppingOrStopped) throw new Error('Invalid state: recording has already been stopped')
 
     this.streamWriter = new PageVideoStreamWriter(savePath, this.options.outputOptions)
@@ -77,53 +114,6 @@ export class PuppeteerScreenRecorder {
 
   private async ensureDirectoryExist(dirPath: string) {
     await mkdir(dirPath, { recursive: true })
-  }
-
-  /**
-   * @description Start the video capturing session in a stream
-   * @example
-   * ```
-   *  const stream = new PassThrough();
-   *  await recorder.startWritingToStream(stream);
-   * ```
-   */
-  async startWritingToStream(stream: Writable): Promise<void> {
-    if (this.options.twoPassViaFilePath) {
-      await this.startWritingToStreamWithTwoPassEncoding(stream, this.options.twoPassViaFilePath)
-    } else {
-      await this.startWritingToStreamInner(stream)
-    }
-  }
-
-  private async startWritingToStreamWithTwoPassEncoding(stream: Writable, temporaryFilePath: string) {
-    await this.encodeSecondPassToFile(temporaryFilePath)
-    await this.streamTemporaryFileToStream(temporaryFilePath, stream)
-    await rm(temporaryFilePath)
-  }
-
-  private async encodeSecondPassToFile(temporaryFilePath: string) {
-    const temporaryStream = new PassThrough()
-    await this.startWritingToStreamInner(temporaryStream)
-    const command = ffmpeg({ source: temporaryStream, priority: 20 }).save(temporaryFilePath)
-    await new Promise((resolve, reject) => command.on('error', reject).on('end', resolve))
-  }
-
-  private async streamTemporaryFileToStream(temporaryFilePath: string, stream: Writable) {
-    const temporaryFile = createReadStream(temporaryFilePath)
-    const temporaryFilePromise = new Promise((resolve, reject) =>
-      temporaryFile.on('error', reject).on('end', resolve)
-    )
-    temporaryFile.pipe(stream, { end: true })
-    await temporaryFilePromise
-  }
-
-  private async startWritingToStreamInner(stream: Writable) {
-    if (this.stoppingOrStopped) throw new Error('Invalid state: recording has already been stopped')
-
-    this.streamWriter = new PageVideoStreamWriter(stream, this.options.outputOptions)
-    await this.streamWriter.startStreamWriter()
-    this.setupAutoStop()
-    await this.startStreamReader()
   }
 
   private setupAutoStop() {
@@ -189,6 +179,38 @@ export class PuppeteerScreenRecorder {
   private async stopInternal(): Promise<void> {
     await this.streamWriter?.stop()
     await this.streamReader.stop()
+    await this.runSecondPassIfRequired()
+  }
+
+  private async runSecondPassIfRequired() {
+    if (!this.options.twoPassEncoding) return
+
+    if (!this.destination) throw new Error('Invalid state: destination is undefined')
+
+    if (this.destination.type === 'file') {
+      await encodeWithSecondPass({
+        source: this.options.twoPassEncoding[0],
+        output: this.destination.path,
+      })
+      await rm(this.options.twoPassEncoding[0])
+    } else if (this.destination.type === 'stream') {
+      await encodeWithSecondPass({
+        source: this.options.twoPassEncoding[0],
+        output: this.options.twoPassEncoding[1],
+      })
+      await this.streamTemporaryFileToStream(this.options.twoPassEncoding[1], this.destination.stream)
+      await rm(this.options.twoPassEncoding[0])
+      await rm(this.options.twoPassEncoding[1])
+    }
+  }
+
+  private async streamTemporaryFileToStream(temporaryFilePath: string, stream: Writable) {
+    const temporaryFile = createReadStream(temporaryFilePath)
+    const temporaryFilePromise = new Promise((resolve, reject) =>
+      temporaryFile.on('error', reject).on('end', resolve)
+    )
+    temporaryFile.pipe(stream, { end: true })
+    await temporaryFilePromise
   }
 
   private get stoppingOrStopped() {
@@ -202,4 +224,11 @@ export class PuppeteerScreenRecorder {
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function encodeWithSecondPass({ source, output }: { source: string; output: string }) {
+  if (source === output) throw new Error('Invalid state: source and output cannot be the same')
+  await new Promise((resolve, reject) => {
+    ffmpeg({ source, priority: 20 }).on('error', reject).on('end', resolve).save(output)
+  })
 }

@@ -27,7 +27,7 @@ export function toDefinedOptions(
     logger = console,
     keyframeIntervalInSeconds,
     metadata = {},
-    twoPassViaFilePath,
+    twoPassEncoding,
   } = options
 
   if (fps < 0) throw new Error('fps must be at least 0')
@@ -39,6 +39,12 @@ export function toDefinedOptions(
   if (minVideoBitrate > maxVideoBitrate) throw new Error('minVideoBitrate must be <= maxVideoBitrate')
   if (typeof autoStopAfterSeconds === 'number' && autoStopAfterSeconds < 1)
     throw new Error('autoStopAfterSeconds must be at least 1 second')
+  if (twoPassEncoding) {
+    if (twoPassEncoding[0] === twoPassEncoding[1])
+      throw new Error('twoPassEncoding must be two different paths')
+    if (!twoPassEncoding[0] || !twoPassEncoding[1])
+      throw new Error('twoPassEncoding must be two valid paths')
+  }
 
   const inputOptions: PageVideoStreamReaderOptions = {
     followNewTab,
@@ -66,7 +72,7 @@ export function toDefinedOptions(
     logger,
     metadata,
   }
-  return { inputOptions, outputOptions, logger, twoPassViaFilePath }
+  return { inputOptions, outputOptions, logger, twoPassEncoding }
 }
 
 export interface PuppeteerScreenRecorderOptions {
@@ -197,14 +203,14 @@ export interface PuppeteerScreenRecorderOptions {
   readonly metadata?: Record<string, string>
 
   /**
-   * Enables two pass encoding, which results in much smaller files.
+   * @description two pass encoding, which results in much smaller files. The first pass is written to the first file, the second pass is written to the second file. The second file is streamed to the output stream if the streaming option is requested. The temporary files are deleted after processing / streaming is finished.
    */
-  readonly twoPassViaFilePath?: string
+  readonly twoPassEncoding?: [string, string]
 }
 
 export interface DefinedPuppeteerScreenRecorderOptions {
   readonly logger: Logger
   readonly inputOptions: PageVideoStreamReaderOptions
   readonly outputOptions: PageVideoStreamWriterOptions
-  readonly twoPassViaFilePath?: string
+  readonly twoPassEncoding?: [string, string]
 }

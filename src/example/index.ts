@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import fs from 'fs'
 import { PassThrough } from 'stream'
 
@@ -5,7 +6,6 @@ import puppeteer from 'puppeteer'
 
 import { PuppeteerScreenRecorder } from '../lib/PuppeteerScreenRecorder'
 
-/** @ignore */
 async function testStartMethod(format: string, isStream: boolean) {
   const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH
   const browser = await puppeteer.launch({
@@ -42,7 +42,5 @@ async function executeSample(format: string) {
 }
 
 executeSample('./report/video/simple1.mp4')
-  .then(() => {
-    console.log('completed')
-  })
+  .then(() => console.log('completed'))
   .catch(console.error)
