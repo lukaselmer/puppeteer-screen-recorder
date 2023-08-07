@@ -4,6 +4,7 @@ import { dirname } from 'node:path'
 import { Writable } from 'node:stream'
 import ffmpeg from 'fluent-ffmpeg'
 import { Page } from 'puppeteer'
+import { Logger } from './logger'
 import {
   DefinedPuppeteerScreenRecorderOptions,
   PuppeteerScreenRecorderOptions,
@@ -195,6 +196,7 @@ export class PuppeteerScreenRecorder {
       await encodeWithSecondPass({
         source: this.options.twoPassEncoding[0],
         output: this.destination.path,
+        logger: this.logger,
       })
       await rm(this.options.twoPassEncoding[0])
     } else if (this.destination.type === 'stream') {
@@ -202,6 +204,7 @@ export class PuppeteerScreenRecorder {
       await encodeWithSecondPass({
         source: this.options.twoPassEncoding[0],
         output: this.options.twoPassEncoding[1],
+        logger: this.logger,
       })
       await rm(this.options.twoPassEncoding[0])
 
@@ -233,9 +236,10 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-async function encodeWithSecondPass({ source, output }: { source: string; output: string }) {
+async function encodeWithSecondPass(props: { source: string; output: string; logger: Logger }) {
+  const { source, output, logger } = props
   if (source === output) throw new Error('Invalid state: source and output cannot be the same')
-  await new Promise((resolve, reject) => {
-    ffmpeg({ source, priority: 20 }).on('error', reject).on('end', resolve).save(output)
-  })
+  await new Promise((resolve, reject) =>
+    ffmpeg({ source, priority: 20, logger }).on('error', reject).on('end', resolve).save(output)
+  )
 }

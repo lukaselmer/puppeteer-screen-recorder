@@ -32,17 +32,9 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
     await this.configureFfmpegPath()
 
     if (typeof this.destination === 'string') await this.configureDestinationFile(this.destination)
-    else if (this.destination.writable) {
-      // this.configureFinalDestination(this.destination)
-      // await this.configureDestinationStream(this.temporaryDestination)
-      await this.configureDestinationStream(this.destination)
-    } else throw new Error('Output should be a path or a writable stream')
+    else if (this.destination.writable) await this.configureDestinationStream(this.destination)
+    else throw new Error('Output should be a path or a writable stream')
   }
-
-  // private configureFinalDestination(destination: Writable) {
-  //   ffmpeg({ source: this.temporaryDestination, priority: 20 })
-  //     .writeToStream(destination)
-  // }
 
   private async configureDestinationFile(destinationPath: string) {
     const outputFormat = this.outputFormatFor(destinationPath)
@@ -136,13 +128,10 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
     outputFormat: OutputFormat,
     videoCodec: string
   ): Promise<FfmpegCommand> {
-    await validateVideoCodec(videoCodec)
+    await validateVideoCodec(videoCodec, this.logger)
     const threads = Math.max(1, os.cpus().length - 1)
 
-    const outputStream = ffmpeg({
-      source: this.videoMediatorStream,
-      priority: 20,
-    })
+    const outputStream = ffmpeg({ source: this.videoMediatorStream, priority: 20, logger: this.logger })
       .videoCodec(videoCodec)
       .size(this.videoFrameSize)
       .aspect(this.options.aspectRatio)
@@ -218,7 +207,6 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
     this.status = 'stopping'
     this.frameProcessor.drainFrames()
 
-    // this.temporaryDestination.end()
     this.videoMediatorStream.end()
     this.status = 'completed'
 

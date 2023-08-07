@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import fs from 'fs'
+import fs from 'node:fs'
 import { PassThrough } from 'stream'
 
 import puppeteer from 'puppeteer'

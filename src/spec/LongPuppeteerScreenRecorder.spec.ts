@@ -1,7 +1,6 @@
-import fs from 'fs'
-import { mkdir } from 'fs/promises'
-import { dirname } from 'path'
-// import ffmpeg from 'fluent-ffmpeg'
+import { createWriteStream, existsSync, WriteStream } from 'node:fs'
+import { mkdir } from 'node:fs/promises'
+import { dirname } from 'node:path'
 import puppeteer, { Page } from 'puppeteer'
 import { describe, it } from 'vitest'
 import { PuppeteerScreenRecorder, PuppeteerScreenRecorderOptions } from '..'
@@ -9,29 +8,25 @@ import { PuppeteerScreenRecorder, PuppeteerScreenRecorderOptions } from '..'
 describe.concurrent(
   'LongPuppeteerScreenRecorder',
   () => {
-    it.only('converts a simple file to another file', async () => {
-      // const inputPath = './test-output/2023-08-07T00-54-52.313Z-metadata-libx264.mp4'
-      // const newPath = './test-output/2023-08-07T00-54-52.313Z-metadata-libx264-converted.mp4'
-      // const readStream = fs.createReadStream(inputPath)
-      // const writeStream = fs.createWriteStream(newPath)
-      // const command = ffmpeg({ source: readStream, priority: 20, logger: console })
-      //   .on('error', (error) => console.error('XXXXXXXX', error))
-      //   .save(newPath)
-      // await new Promise((resolve) => command.on('end', resolve))
-    })
+    // this doesn't work:
+    // it.only('converts a simple file to another file', async () => {
+    // const inputPath = './test-output/2023-08-07T00-54-52.313Z-metadata-libx264.mp4'
+    // const newPath = './test-output/2023-08-07T00-54-52.313Z-metadata-libx264-converted.mp4'
+    // const readStream = fs.createReadStream(inputPath)
+    // const writeStream = createWriteStream(newPath)
+    // const command = ffmpeg({ source: readStream, priority: 20, logger: console })
+    //   .on('error', (error) => console.error('XXXXXXXX', error))
+    //   .save(newPath)
+    // await new Promise((resolve) => command.on('end', resolve))
+    // })
 
     it(
       `throws with an invalid codec`,
       async ({ expect }) => {
         const outputVideoPath = outputPath('long-invalid-codec-streamed.invalid')
         await withBrowser(async (page) => {
-          try {
-            fs.mkdirSync(dirname(outputVideoPath), { recursive: true })
-          } catch (e) {
-            console.error(e)
-          }
-
-          const fileWriteStream = fs.createWriteStream(outputVideoPath)
+          await mkdir(dirname(outputVideoPath), { recursive: true })
+          const fileWriteStream = createWriteStream(outputVideoPath)
 
           await expect(async () => {
             const options: PuppeteerScreenRecorderOptions = { videoCodec: 'invalid-codec' }
@@ -51,13 +46,13 @@ describe.concurrent(
         await withBrowser(async (page) => {
           await mkdir(dirname(outputVideoPath), { recursive: true })
 
-          const fileWriteStream = fs.createWriteStream(outputVideoPath)
+          const fileWriteStream = createWriteStream(outputVideoPath)
 
           const options: PuppeteerScreenRecorderOptions = { ...commonOptions(), videoCodec: 'libx264' }
 
           await record(page, options, fileWriteStream)
 
-          expect(fs.existsSync(outputVideoPath)).toBeTruthy()
+          expect(existsSync(outputVideoPath)).toBeTruthy()
           fileWriteStream.on('end', () => {
             expect(fileWriteStream.writableFinished).toBeTruthy()
           })
@@ -71,13 +66,13 @@ describe.concurrent(
         await withBrowser(async (page) => {
           await mkdir(dirname(outputVideoPath), { recursive: true })
 
-          const fileWriteStream = fs.createWriteStream(outputVideoPath)
+          const fileWriteStream = createWriteStream(outputVideoPath)
 
           const options: PuppeteerScreenRecorderOptions = { ...commonOptions(), videoCodec: 'libx265' }
 
           await record(page, options, fileWriteStream)
 
-          expect(fs.existsSync(outputVideoPath)).toBeTruthy()
+          expect(existsSync(outputVideoPath)).toBeTruthy()
           fileWriteStream.on('end', () => {
             expect(fileWriteStream.writableFinished).toBeTruthy()
           })
@@ -91,7 +86,7 @@ describe.concurrent(
         await withBrowser(async (page) => {
           await mkdir(dirname(outputVideoPath), { recursive: true })
 
-          const fileWriteStream = fs.createWriteStream(outputVideoPath)
+          const fileWriteStream = createWriteStream(outputVideoPath)
 
           const options: PuppeteerScreenRecorderOptions = {
             ...commonOptions(),
@@ -101,7 +96,7 @@ describe.concurrent(
 
           await record(page, options, fileWriteStream)
 
-          expect(fs.existsSync(outputVideoPath)).toBeTruthy()
+          expect(existsSync(outputVideoPath)).toBeTruthy()
           fileWriteStream.on('end', () => {
             expect(fileWriteStream.writableFinished).toBeTruthy()
           })
@@ -127,7 +122,7 @@ function commonOptions(): PuppeteerScreenRecorderOptions {
 async function record(
   page: Page,
   options: PuppeteerScreenRecorderOptions,
-  fileWriteStream: fs.WriteStream
+  fileWriteStream: WriteStream
 ) {
   await goToClock(page)
   const recorder = new PuppeteerScreenRecorder(page, options)

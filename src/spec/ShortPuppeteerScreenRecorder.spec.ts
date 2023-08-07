@@ -1,10 +1,10 @@
-import fs from 'fs'
-import { dirname } from 'path'
-
+import { createWriteStream, existsSync } from 'node:fs'
+import { mkdir } from 'node:fs/promises'
+import { dirname } from 'node:path'
 import puppeteer, { Page } from 'puppeteer'
 import { describe, ExpectStatic, it, TestContext } from 'vitest'
-
-import { PuppeteerScreenRecorder, PuppeteerScreenRecorderOptions } from '..'
+import { PuppeteerScreenRecorder } from '../lib/PuppeteerScreenRecorder'
+import { PuppeteerScreenRecorderOptions } from '../lib/PuppeteerScreenRecorderOptions'
 import { inMemoryLogger } from '../lib/writer/frameProcessor/writerTestUtils'
 
 describe.concurrent(
@@ -82,13 +82,9 @@ describe.concurrent(
       const outputVideoPath = outputPath('4-streamed.mp4')
       it(`Streams the video to ${outputVideoPath}`, async ({ expect }) => {
         await withBrowser(async (page) => {
-          try {
-            fs.mkdirSync(dirname(outputVideoPath), { recursive: true })
-          } catch (e) {
-            console.error(e)
-          }
+          await mkdir(dirname(outputVideoPath), { recursive: true })
 
-          const fileWriteStream = fs.createWriteStream(outputVideoPath)
+          const fileWriteStream = createWriteStream(outputVideoPath)
 
           const recorder = new PuppeteerScreenRecorder(page)
           await recorder.startWritingToStream(fileWriteStream)
@@ -97,7 +93,7 @@ describe.concurrent(
 
           await recorder.stop()
 
-          expect(fs.existsSync(outputVideoPath)).toBeTruthy()
+          expect(existsSync(outputVideoPath)).toBeTruthy()
           fileWriteStream.on('end', () => {
             expect(fileWriteStream.writableFinished).toBeTruthy()
           })
@@ -126,7 +122,7 @@ describe.concurrent(
 
           await recorder.stop()
 
-          expect(fs.existsSync(outputVideoPath)).toBeTruthy()
+          expect(existsSync(outputVideoPath)).toBeTruthy()
         })
       })
     }
@@ -244,7 +240,7 @@ function assertSuccessfulRecording(
   outputVideoPath: string,
   checkDuration = true
 ) {
-  expect(fs.existsSync(outputVideoPath)).toBeTruthy()
+  expect(existsSync(outputVideoPath)).toBeTruthy()
 
   if (checkDuration) {
     const duration = recorder.recordDuration
