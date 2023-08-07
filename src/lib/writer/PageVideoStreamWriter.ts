@@ -128,10 +128,14 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
     outputFormat: OutputFormat,
     videoCodec: string
   ): Promise<FfmpegCommand> {
-    await validateVideoCodec(videoCodec, this.logger)
+    await validateVideoCodec(videoCodec, this.options.ffmpegLogger)
     const threads = Math.max(1, os.cpus().length - 1)
 
-    const outputStream = ffmpeg({ source: this.videoMediatorStream, priority: 20, logger: this.logger })
+    const outputStream = ffmpeg({
+      source: this.videoMediatorStream,
+      priority: 20,
+      logger: this.options.ffmpegLogger,
+    })
       .videoCodec(videoCodec)
       .size(this.videoFrameSize)
       .aspect(this.options.aspectRatio)

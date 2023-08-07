@@ -19,5 +19,6 @@ export interface PageVideoStreamWriterOptions {
   readonly keyframeIntervalInSeconds: number | undefined
   readonly autoStopAfterSeconds: number | undefined
   readonly logger: Logger
+  readonly ffmpegLogger: Logger
   readonly metadata: Record<string, string>
 }

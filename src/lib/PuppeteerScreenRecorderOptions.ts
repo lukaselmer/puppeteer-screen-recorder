@@ -25,6 +25,7 @@ export function toDefinedOptions(
     autoPad = 'off',
     autoStopAfterSeconds,
     logger: providedLogger,
+    ffmpegLogger: providedFfmpegLogger,
     keyframeIntervalInSeconds,
     metadata = {},
     twoPassEncoding,
@@ -47,6 +48,7 @@ export function toDefinedOptions(
   }
 
   const logger = providedLogger ?? nullObjectLogger()
+  const ffmpegLogger = providedFfmpegLogger ?? nullObjectLogger()
 
   const inputOptions: PageVideoStreamReaderOptions = {
     followNewTab,
@@ -73,8 +75,9 @@ export function toDefinedOptions(
     autoStopAfterSeconds,
     logger,
     metadata,
+    ffmpegLogger,
   }
-  return { inputOptions, outputOptions, logger, twoPassEncoding }
+  return { inputOptions, outputOptions, logger, ffmpegLogger, twoPassEncoding }
 }
 
 function nullObjectLogger(): Logger {
@@ -195,10 +198,14 @@ export interface PuppeteerScreenRecorderOptions {
   readonly inputFramesToBuffer?: number
 
   /**
-   * @description Specify the logger to use.
-   * @default console
+   * @description Specify the logger to use. Doesn't log if not specified.
    */
   readonly logger?: Logger
+
+  /**
+   * @description Specify the logger passed to ffmpeg. Doesn't log if not specified.
+   */
+  readonly ffmpegLogger?: Logger
 
   /**
    * @description Specify metadata information as key value pairs. For more information, see:
@@ -216,6 +223,7 @@ export interface PuppeteerScreenRecorderOptions {
 
 export interface DefinedPuppeteerScreenRecorderOptions {
   readonly logger: Logger
+  readonly ffmpegLogger: Logger
   readonly inputOptions: PageVideoStreamReaderOptions
   readonly outputOptions: PageVideoStreamWriterOptions
   readonly twoPassEncoding?: [string, string]

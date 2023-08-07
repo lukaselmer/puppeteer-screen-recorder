@@ -196,7 +196,7 @@ export class PuppeteerScreenRecorder {
       await encodeWithSecondPass({
         source: this.options.twoPassEncoding[0],
         output: this.destination.path,
-        logger: this.logger,
+        logger: this.options.ffmpegLogger,
       })
       await rm(this.options.twoPassEncoding[0])
     } else if (this.destination.type === 'stream') {
@@ -204,7 +204,7 @@ export class PuppeteerScreenRecorder {
       await encodeWithSecondPass({
         source: this.options.twoPassEncoding[0],
         output: this.options.twoPassEncoding[1],
-        logger: this.logger,
+        logger: this.options.ffmpegLogger,
       })
       await rm(this.options.twoPassEncoding[0])
 
