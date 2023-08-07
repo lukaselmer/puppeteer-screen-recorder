@@ -27,6 +27,7 @@ export function toDefinedOptions(
     logger = console,
     keyframeIntervalInSeconds,
     metadata = {},
+    twoPassViaFilePath,
   } = options
 
   if (fps < 0) throw new Error('fps must be at least 0')
@@ -65,7 +66,7 @@ export function toDefinedOptions(
     logger,
     metadata,
   }
-  return { inputOptions, outputOptions, logger }
+  return { inputOptions, outputOptions, logger, twoPassViaFilePath }
 }
 
 export interface PuppeteerScreenRecorderOptions {
@@ -194,10 +195,16 @@ export interface PuppeteerScreenRecorderOptions {
    * https://write.corbpie.com/adding-metadata-to-a-video-or-audio-file-with-ffmpeg/
    */
   readonly metadata?: Record<string, string>
+
+  /**
+   * Enables two pass encoding, which results in much smaller files.
+   */
+  readonly twoPassViaFilePath?: string
 }
 
 export interface DefinedPuppeteerScreenRecorderOptions {
   readonly logger: Logger
   readonly inputOptions: PageVideoStreamReaderOptions
   readonly outputOptions: PageVideoStreamWriterOptions
+  readonly twoPassViaFilePath?: string
 }

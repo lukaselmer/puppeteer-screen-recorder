@@ -14,7 +14,8 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
 
   private status: VideoWriteStatus = 'notStarted'
 
-  private readonly videoMediatorStream: PassThrough = new PassThrough()
+  private readonly videoMediatorStream = new PassThrough()
+  // private readonly temporaryDestination = new PassThrough()
   private readonly frameProcessor: BufferedFrameProcessor
 
   private writerPromise: Promise<void> | undefined
@@ -31,9 +32,17 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
     await this.configureFfmpegPath()
 
     if (typeof this.destination === 'string') await this.configureDestinationFile(this.destination)
-    else if (this.destination.writable) await this.configureDestinationStream(this.destination)
-    else throw new Error('Output should be a path or a writable stream')
+    else if (this.destination.writable) {
+      // this.configureFinalDestination(this.destination)
+      // await this.configureDestinationStream(this.temporaryDestination)
+      await this.configureDestinationStream(this.destination)
+    } else throw new Error('Output should be a path or a writable stream')
   }
+
+  // private configureFinalDestination(destination: Writable) {
+  //   ffmpeg({ source: this.temporaryDestination, priority: 20 })
+  //     .writeToStream(destination)
+  // }
 
   private async configureDestinationFile(destinationPath: string) {
     const outputFormat = this.outputFormatFor(destinationPath)
@@ -209,6 +218,7 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
     this.status = 'stopping'
     this.frameProcessor.drainFrames()
 
+    // this.temporaryDestination.end()
     this.videoMediatorStream.end()
     this.status = 'completed'
 

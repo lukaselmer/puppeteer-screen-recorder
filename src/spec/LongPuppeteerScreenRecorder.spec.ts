@@ -1,6 +1,7 @@
 import fs from 'fs'
 import { mkdir } from 'fs/promises'
 import { dirname } from 'path'
+// import ffmpeg from 'fluent-ffmpeg'
 import puppeteer, { Page } from 'puppeteer'
 import { describe, it } from 'vitest'
 import { PuppeteerScreenRecorder, PuppeteerScreenRecorderOptions } from '..'
@@ -8,6 +9,17 @@ import { PuppeteerScreenRecorder, PuppeteerScreenRecorderOptions } from '..'
 describe.concurrent(
   'LongPuppeteerScreenRecorder',
   () => {
+    it.only('converts a simple file to another file', async () => {
+      // const inputPath = './test-output/2023-08-07T00-54-52.313Z-metadata-libx264.mp4'
+      // const newPath = './test-output/2023-08-07T00-54-52.313Z-metadata-libx264-converted.mp4'
+      // const readStream = fs.createReadStream(inputPath)
+      // const writeStream = fs.createWriteStream(newPath)
+      // const command = ffmpeg({ source: readStream, priority: 20, logger: console })
+      //   .on('error', (error) => console.error('XXXXXXXX', error))
+      //   .save(newPath)
+      // await new Promise((resolve) => command.on('end', resolve))
+    })
+
     it(
       `throws with an invalid codec`,
       async ({ expect }) => {
@@ -97,7 +109,7 @@ describe.concurrent(
       })
     }
   },
-  { retry: 0, timeout: 600_000 }
+  { retry: 0, timeout: 40 * 60 * 1000 }
 )
 
 function commonOptions(): PuppeteerScreenRecorderOptions {
@@ -105,7 +117,8 @@ function commonOptions(): PuppeteerScreenRecorderOptions {
     fps: 20,
     keyframeIntervalInSeconds: 1,
     videoFrame: { width: 1920, height: 1080 },
-    autoStopAfterSeconds: 10,
+    // autoStopAfterSeconds: 300,
+    autoStopAfterSeconds: 5,
     minVideoBitrate: 1000,
     maxVideoBitrate: 1000,
   }

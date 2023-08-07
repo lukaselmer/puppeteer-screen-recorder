@@ -21,7 +21,7 @@ async function testStartMethod(format: string, isStream: boolean) {
     passthrough.pipe(fileWriteStream)
     await recorder.startWritingToStream(passthrough)
   } else {
-    await recorder.statWritingToFile(format)
+    await recorder.startWritingToFile(format)
   }
   await page.goto('https://developer.mozilla.org/en-US/docs/Web/CSS/animation')
   await sleep(10 * 1000)

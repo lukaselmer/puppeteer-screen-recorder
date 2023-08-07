@@ -53,7 +53,7 @@ describe.concurrent(
             aspectRatio: '4:3',
           }
           const recorder = new PuppeteerScreenRecorder(page, options)
-          await recorder.statWritingToFile(outputVideoPath)
+          await recorder.startWritingToFile(outputVideoPath)
 
           await goToGithub(page)
 
@@ -69,7 +69,7 @@ describe.concurrent(
         try {
           const outputVideoPath = outputPath('tes')
           const recorder = new PuppeteerScreenRecorder(page, { logger: inMemoryLogger() })
-          await recorder.statWritingToFile(outputVideoPath)
+          await recorder.startWritingToFile(outputVideoPath)
         } catch (error) {
           expect((error as Error).message.trim()).toMatchInlineSnapshot(
             '"ffmpeg exited with code 1: ./test-output/tes: Invalid argument"'
@@ -120,7 +120,7 @@ describe.concurrent(
             },
           }
           const recorder = new PuppeteerScreenRecorder(page, options)
-          await recorder.statWritingToFile(outputVideoPath)
+          await recorder.startWritingToFile(outputVideoPath)
 
           await goToGithub(page)
 
@@ -146,7 +146,7 @@ describe.concurrent(
             },
           }
           const recorder = new PuppeteerScreenRecorder(page, options)
-          await recorder.statWritingToFile(outputVideoPath)
+          await recorder.startWritingToFile(outputVideoPath)
 
           await goToGithub(page)
 
@@ -170,7 +170,7 @@ describe.concurrent(
             autoPad: {},
           }
           const recorder = new PuppeteerScreenRecorder(page, options)
-          await recorder.statWritingToFile(outputVideoPath)
+          await recorder.startWritingToFile(outputVideoPath)
 
           await goToGithub(page)
 
@@ -194,7 +194,7 @@ describe.concurrent(
             videoCrf: 0,
           }
           const recorder = new PuppeteerScreenRecorder(page, options)
-          await recorder.statWritingToFile(outputVideoPath)
+          await recorder.startWritingToFile(outputVideoPath)
 
           await goToGithub(page)
 
@@ -211,7 +211,7 @@ describe.concurrent(
 async function recordWithFormat(outputVideoPath: string, expect: ExpectStatic, format: string) {
   await withBrowser(async (page) => {
     const recorder = new PuppeteerScreenRecorder(page)
-    await recorder.statWritingToFile(outputVideoPath)
+    await recorder.startWritingToFile(outputVideoPath)
 
     await goToGithubAndGoogle(page)
 

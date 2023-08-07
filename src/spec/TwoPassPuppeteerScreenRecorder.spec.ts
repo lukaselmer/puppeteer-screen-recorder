@@ -6,15 +6,15 @@ import { describe, it } from 'vitest'
 import { PuppeteerScreenRecorder, PuppeteerScreenRecorderOptions } from '..'
 
 describe.concurrent(
-  'MetadataPuppeteerScreenRecorder',
+  'TwoPassPuppeteerScreenRecorder',
   () => {
     {
-      const outputVideoPath = outputPath('metadata-stream-libx264.mp4')
+      const outputVideoPath = outputPath('twopass-file.mp4')
       it(`Writes the video to ${outputVideoPath}`, async ({ expect }) => {
         await withBrowser(async (page) => {
           await mkdir(dirname(outputVideoPath), { recursive: true })
 
-          const options: PuppeteerScreenRecorderOptions = { ...commonOptions(), videoCodec: 'libx264' }
+          const options: PuppeteerScreenRecorderOptions = { ...commonOptions() }
 
           await recordFile(page, options, outputVideoPath)
 
@@ -24,14 +24,14 @@ describe.concurrent(
     }
 
     {
-      const outputVideoPath = outputPath('metadata-file-libx264.mp4')
+      const outputVideoPath = outputPath('twopass-stream.mp4')
       it(`Streams the video to ${outputVideoPath}`, async ({ expect }) => {
         await withBrowser(async (page) => {
           await mkdir(dirname(outputVideoPath), { recursive: true })
 
           const fileWriteStream = fs.createWriteStream(outputVideoPath)
 
-          const options: PuppeteerScreenRecorderOptions = { ...commonOptions(), videoCodec: 'libx264' }
+          const options: PuppeteerScreenRecorderOptions = { ...commonOptions() }
 
           await recordStream(page, options, fileWriteStream)
 
@@ -60,6 +60,7 @@ function commonOptions(): PuppeteerScreenRecorderOptions {
       description: 'example description',
       year: '2023',
     },
+    twoPassViaFilePath: outputPath('temporary.mp4'),
   }
 }
 
