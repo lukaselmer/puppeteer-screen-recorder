@@ -51,6 +51,7 @@ describe.concurrent(
               height: 1024,
             },
             aspectRatio: '4:3',
+            ffmpegPath,
           }
           const recorder = new PuppeteerScreenRecorder(page, options)
           await recorder.startWritingToFile(outputVideoPath)
@@ -68,7 +69,7 @@ describe.concurrent(
       await withBrowser(async (page) => {
         try {
           const outputVideoPath = outputPath('tes')
-          const recorder = new PuppeteerScreenRecorder(page, { logger: inMemoryLogger() })
+          const recorder = new PuppeteerScreenRecorder(page, { logger: inMemoryLogger(), ffmpegPath })
           await recorder.startWritingToFile(outputVideoPath)
         } catch (error) {
           expect((error as Error).message.trim()).toMatchInlineSnapshot(
@@ -86,7 +87,7 @@ describe.concurrent(
 
           const fileWriteStream = createWriteStream(outputVideoPath)
 
-          const recorder = new PuppeteerScreenRecorder(page)
+          const recorder = new PuppeteerScreenRecorder(page, { ffmpegPath })
           await recorder.startWritingToStream(fileWriteStream)
 
           await goToGithubAndGoogle(page)
@@ -114,6 +115,7 @@ describe.concurrent(
             autoPad: {
               color: 'gray',
             },
+            ffmpegPath,
           }
           const recorder = new PuppeteerScreenRecorder(page, options)
           await recorder.startWritingToFile(outputVideoPath)
@@ -140,6 +142,7 @@ describe.concurrent(
             autoPad: {
               color: '#008000',
             },
+            ffmpegPath,
           }
           const recorder = new PuppeteerScreenRecorder(page, options)
           await recorder.startWritingToFile(outputVideoPath)
@@ -164,6 +167,7 @@ describe.concurrent(
               height: 1024,
             },
             autoPad: {},
+            ffmpegPath,
           }
           const recorder = new PuppeteerScreenRecorder(page, options)
           await recorder.startWritingToFile(outputVideoPath)
@@ -188,6 +192,7 @@ describe.concurrent(
               height: 1024,
             },
             videoCrf: 0,
+            ffmpegPath,
           }
           const recorder = new PuppeteerScreenRecorder(page, options)
           await recorder.startWritingToFile(outputVideoPath)
@@ -206,7 +211,7 @@ describe.concurrent(
 
 async function recordWithFormat(outputVideoPath: string, expect: ExpectStatic, format: string) {
   await withBrowser(async (page) => {
-    const recorder = new PuppeteerScreenRecorder(page)
+    const recorder = new PuppeteerScreenRecorder(page, { ffmpegPath })
     await recorder.startWritingToFile(outputVideoPath)
 
     await goToGithubAndGoogle(page)
@@ -266,3 +271,5 @@ async function withBrowser(fn: (page: Page) => Promise<void>) {
     await browser.close()
   }
 }
+
+const ffmpegPath = process.env.FFMPEG_PATH ?? 'ffmpeg'

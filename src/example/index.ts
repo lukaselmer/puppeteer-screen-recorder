@@ -13,7 +13,7 @@ async function testStartMethod(format: string, isStream: boolean) {
     headless: false,
   })
   const page = await browser.newPage()
-  const recorder = new PuppeteerScreenRecorder(page)
+  const recorder = new PuppeteerScreenRecorder(page, { ffmpegPath: process.env.FFMPEG_PATH ?? 'ffmpeg' })
   if (isStream) {
     const passthrough = new PassThrough()
     format = format.replace('video', 'stream')

@@ -29,7 +29,7 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
   }
 
   async startStreamWriter(): Promise<void> {
-    await this.configureFfmpegPath()
+    this.configureFfmpegPath()
 
     if (typeof this.destination === 'string') await this.configureDestinationFile(this.destination)
     else if (this.destination.writable) await this.configureDestinationStream(this.destination)
@@ -217,29 +217,8 @@ export class PageVideoStreamWriter extends TypedEmitter<PageVideoStreamWriterEve
     await this.writerPromise
   }
 
-  private async configureFfmpegPath(): Promise<void> {
-    const ffmpegPath = await this.getFfmpegPath()
-
-    if (!ffmpegPath) {
-      throw new Error('FFmpeg path is missing, \n Set the FFMPEG_PATH env variable')
-    }
-
-    setFfmpegPath(ffmpegPath)
-  }
-
-  private async getFfmpegPath(): Promise<string | null> {
-    if (this.options.ffmpegPath) return this.options.ffmpegPath
-
-    try {
-      // eslint-disable-next-line import/no-extraneous-dependencies
-      const ffmpegInstaller = await import('@ffmpeg-installer/ffmpeg')
-      if (ffmpegInstaller.path) return ffmpegInstaller.path
-
-      return null
-    } catch (e) {
-      this.logger.error(e)
-      return null
-    }
+  private configureFfmpegPath() {
+    setFfmpegPath(this.options.ffmpegPath)
   }
 
   private get fps(): number {

@@ -101,7 +101,7 @@ const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder')
 const Config = {
   followNewTab: true,
   fps: 25,
-  ffmpegPath: '<path of ffmpeg_path>' || null,
+  ffmpegPath: '<path of ffmpeg_path>' || process.env.FFMPEG_PATH,
   videoFrame: {
     width: 1024,
     height: 768,
@@ -123,8 +123,7 @@ const Config = {
 > - **fps**: Numeric value which denotes no.of Frames per second in which the video should be recorded.
 >   default value is 25.
 
-> - **ffmpegPath**: String value pointing to the installation of [FFMPEG](https://ffmpeg.org/). Default
->   is null (Automatically install the FFMPEG and use it).
+> - **ffmpegPath**: String value pointing to the installation of [FFMPEG](https://ffmpeg.org/).
 
 > - **videoFrame**: An object which is to specify the width and height of the capturing video frame.
 >   Default to browser viewport size.
@@ -150,7 +149,7 @@ const recorder = new PuppeteerScreenRecorder(page)
 
 > - **page**: Puppeteer page object which needs to captured.
 > - **config**: Config is an optional object. Default value is
->   `{ followNewTab: true, fps: 25, ffmpegPath: null }`
+>   `{ followNewTab: true, fps: 25, ffmpegPath: 'path/to/ffmpeg' }`
 
 **4. Start Video capturing**
 

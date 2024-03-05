@@ -6,7 +6,7 @@ export interface PageVideoStreamWriterOptions {
   readonly inputFramesToBuffer: number
   readonly outputFormatProvided: boolean
   readonly outputFormat: OutputFormat
-  readonly ffmpegPath: string | undefined
+  readonly ffmpegPath: string
   readonly videoFrame: { width: number; height: number } | undefined
   readonly aspectRatio: '3:2' | '4:3' | '16:9'
   readonly videoCodec?: string

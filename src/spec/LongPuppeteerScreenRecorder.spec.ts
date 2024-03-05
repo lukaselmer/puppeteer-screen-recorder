@@ -29,7 +29,7 @@ describe.concurrent(
           const fileWriteStream = createWriteStream(outputVideoPath)
 
           await expect(async () => {
-            const options: PuppeteerScreenRecorderOptions = { videoCodec: 'invalid-codec' }
+            const options: PuppeteerScreenRecorderOptions = { videoCodec: 'invalid-codec', ffmpegPath }
             const recorder = new PuppeteerScreenRecorder(page, options)
             await recorder.startWritingToStream(fileWriteStream)
           }).rejects.toThrow(
@@ -116,6 +116,7 @@ function commonOptions(): PuppeteerScreenRecorderOptions {
     autoStopAfterSeconds: 5,
     minVideoBitrate: 1000,
     maxVideoBitrate: 1000,
+    ffmpegPath,
   }
 }
 
@@ -158,3 +159,5 @@ async function withBrowser(fn: (page: Page) => Promise<void>) {
     await browser.close()
   }
 }
+
+const ffmpegPath = process.env.FFMPEG_PATH ?? 'ffmpeg'

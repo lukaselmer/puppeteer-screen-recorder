@@ -61,6 +61,7 @@ function commonOptions(): PuppeteerScreenRecorderOptions {
       year: '2023',
     },
     twoPassEncoding: [outputPath('temporary-first.mp4'), outputPath('temporary-second.mp4')],
+    ffmpegPath: process.env.FFMPEG_PATH ?? 'ffmpeg',
   }
 }
 

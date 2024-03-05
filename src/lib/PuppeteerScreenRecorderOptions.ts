@@ -13,7 +13,7 @@ export function toDefinedOptions(
     inputQuality = 100,
     inputFormat = 'jpeg',
     outputFormat,
-    ffmpegPath,
+    ffmpegPath: rawFfmpegPath,
     videoFrame,
     aspectRatio = '4:3',
     videoCodec,
@@ -31,6 +31,8 @@ export function toDefinedOptions(
     twoPassEncoding,
   } = options
 
+  const ffmpegPath = rawFfmpegPath || process.env.FFMPEG_PATH
+  if (!ffmpegPath) throw new Error('ffmpegPath must be provided')
   if (fps < 0) throw new Error('fps must be at least 0')
   if (inputFramesToBuffer < 0) throw new Error('inputFramesToBuffer must be at least 0')
   if (inputQuality < 0 || inputQuality > 100) throw new Error('quality must be between 0 and 100')
@@ -116,10 +118,9 @@ export interface PuppeteerScreenRecorderOptions {
   readonly outputFormat?: OutputFormat
 
   /**
-   * @description String value pointing to the installation of FFMPEG. Default is to automatically install FFMPEG and use it.
-   * @default undefined
+   * @description String value pointing to the installation of FFMPEG.
    */
-  readonly ffmpegPath?: string
+  readonly ffmpegPath: string
 
   /**
    * @description An object which specifies the width and height of the output video frame.

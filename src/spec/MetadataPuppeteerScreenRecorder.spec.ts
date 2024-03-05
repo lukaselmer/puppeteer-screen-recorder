@@ -60,6 +60,7 @@ function commonOptions(): PuppeteerScreenRecorderOptions {
       description: 'example description',
       year: '2023',
     },
+    ffmpegPath,
   }
 }
 
@@ -105,3 +106,5 @@ async function withBrowser(fn: (page: Page) => Promise<void>) {
     await browser.close()
   }
 }
+
+const ffmpegPath = process.env.FFMPEG_PATH ?? 'ffmpeg'

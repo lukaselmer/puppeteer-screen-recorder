@@ -39,7 +39,7 @@ export class PuppeteerScreenRecorder {
 
   constructor(
     private page: Page,
-    options: PuppeteerScreenRecorderOptions = {}
+    options: PuppeteerScreenRecorderOptions
   ) {
     this.options = toDefinedOptions(options)
     this.streamReader = new PageVideoStreamReader(page, this.options.inputOptions)
